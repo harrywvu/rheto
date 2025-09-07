@@ -1,0 +1,14 @@
+-------------------------------------------------------------
+Day 1 - Installation and Configurations     |       
+        - Get it working                    |       ✅
+Day 2 - Basic Widgets and Images            |----------------       
+        - Add Opening Screen                |       ✅
+        - Add Custom Widgets                |       ✅
+        - Align Custom Widgets              |       ✅
+Day 3 - Typefaces and Click events          |----------------
+        - Change App Fonts                  |       
+        - Different Screen Appears          |       
+          when 'Get Started' is clicked     |       
+        - Slight UI / UX designing          |       
+        - Initial Assessment Activity       |       
+          starts                            |

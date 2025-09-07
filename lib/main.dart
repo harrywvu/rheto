@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rheto/AppColors.dart';
 
 // Entry Point of Program
 void main() {
@@ -9,13 +10,37 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   // This widget is the root of your application.
+
   // All 'State*' widget needs a build method
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Rheto',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        // base ui colors are based off of redit lol
+
+
+        colorScheme: ColorScheme.dark(
+          primary: AppColors.mainBackgroundColor
+        ),
+
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF500073),
+            foregroundColor: AppColors.textColor,
+            // textStyle: TextStyle(fontFamily: 'Ntype82-R')
+          )
+        ),
+
+        textTheme: TextTheme(
+          
+          headlineLarge: TextStyle(fontFamily: 'Ntype82-R', color: AppColors.textColor),
+          bodyLarge: TextStyle(fontFamily: 'Lettera', color: AppColors.textColor),
+          bodyMedium: TextStyle(fontFamily: 'Lettera', color: AppColors.textColor),
+          bodySmall: TextStyle(fontFamily: 'Lettera', color: AppColors.textColor)
+
+        )
+      
       ),
       home: const MyHomePage(title: 'Rheto'),
     );
@@ -52,80 +77,33 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // return Scaffold(
-    //   body: Center(
-    //     child: Column(
-    //       mainAxisAlignment: MainAxisAlignment.center,
-    //       children: <Widget>[
-    //         const Text('Rheto - Alpha Build'),
-    //         Text(
-    //           '$_counter',
-    //           style: Theme.of(context).textTheme.headlineMedium,
-    //         ),
-    //         ElevatedButton(
-    //           style: ElevatedButton.styleFrom(
-    //             backgroundColor: Colors.red,
-    //             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-    //           ),
-    //           onPressed: _decrementCounter,
-    //           child: const Text('Decrement'),
-    //         ),
-    //         const SizedBox(height: 45),
-    //         Text(_counterState)
-
-    //       ],
-    //     ),
-    //   ),
-
-    //   floatingActionButton: Row(
-    //     mainAxisAlignment: MainAxisAlignment.end,
-    //     children: [
-    //       FloatingActionButton(
-    //         onPressed: _incrementCounter,
-    //         tooltip: 'Increment',
-    //         child: const Icon(Icons.add),
-    //       ),
-
-    //       const SizedBox(width: 10),
-
-    //       FloatingActionButton(
-    //         onPressed: _decrementCounter,
-    //         tooltip: 'Decrement',
-    //         child: const Icon(Icons.remove),
-    //       ),
-    //     ],
-    //   ),
-
-    //   // This trailing comma makes auto-formatting nicer for build methods.
-    // );
 
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 70),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
 
-            // logo + title
-            Container(
-              width: double.infinity,
-              child: Column(
+            Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.eco, size: 40, color: Colors.green),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Rheto',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    ],
-                  )
+                  // Icon(Icons.eco, size: 40, color: Colors.green),
+                  const Image(image: 
+                              AssetImage(
+                                'assets/icon/rheto.png'),
+                                width: 70,
+                                height: 70,
+                              ),
+
+                  const SizedBox(width: 12),
+                  Text(
+                   'Rheto',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontFamily: 'Ntype82-R'),
+                  ),
                 ],
-              ),
             ),
 
             Column(
@@ -134,18 +112,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () {},
                   child: const Text('Get Started')
                   
-                  ),
+                  
 
-                const SizedBox(width: 12),  
-                Text('Take initial assessment before beginning'),
+                  ),
+                const SizedBox(height: 12), 
+                Text(
+                  'Take initial assessment before beginning',
+                  style: Theme.of(context).textTheme.bodySmall),
               ],
-            
-              
             ),
           
             Text(
               'Welcome to Rheto',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodyMedium,
             )
 
           
