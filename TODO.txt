@@ -6,9 +6,9 @@ Day 2 - Basic Widgets and Images            |----------------
         - Add Custom Widgets                |       ✅
         - Align Custom Widgets              |       ✅
 Day 3 - Typefaces and Click events          |----------------
-        - Change App Fonts                  |       
-        - Different Screen Appears          |       
+        - Change App Fonts                  |       ✅
+        - Different Screen Appears          |       ✅
           when 'Get Started' is clicked     |       
-        - Slight UI / UX designing          |       
+        - Slight UI / UX designing          |       ✅
         - Initial Assessment Activity       |       
           starts                            |
