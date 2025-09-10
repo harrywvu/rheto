@@ -34,6 +34,14 @@ class MyApp extends StatelessWidget {
             fontFamily: 'Ntype82-R',
             color: AppColors.textColor,
           ),
+          headlineMedium: TextStyle(
+            fontFamily: 'Ntype82-R',
+            color: AppColors.textColor,
+          ),
+          headlineSmall: TextStyle(
+            fontFamily: 'Ntype82-R',
+            color: AppColors.textColor,
+          ),
           bodyLarge: TextStyle(
             fontFamily: 'Lettera',
             color: AppColors.textColor,
