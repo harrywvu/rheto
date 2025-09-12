@@ -13,6 +13,13 @@ class AssessmentScreen extends StatefulWidget {
 class _AssessmentScreenState extends State<AssessmentScreen> {
   @override
   Widget build(BuildContext context) {
+
+    // chip Theme
+
+
+
+
+
     // TODO: implement build
     return Scaffold(
       body: Padding(
@@ -69,25 +76,43 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                       label: Text("Memory"),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(color: Color(0xFF74C0FC)),
+                        side: BorderSide(color: Color(0xFFFFD43B)),
                       ),
                     ),
 
                     Chip(
                       avatar: FaIcon(FontAwesomeIcons.squareShareNodes, color: Color(0xFF63E6BE),size: 20),
                       label: Text("Creativity"),
+                      labelStyle: const TextStyle(
+                        fontFamily: 'Lettera'
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                         side: BorderSide(color: Color(0xFF63E6BE)),
                       ),
+                    ),
+
+                    ElevatedButton(
+                      onPressed: () {},
+                      child: Text("Start"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF008000),
+                        textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 20,
+                          fontFamily: 'Ntype82-R' // for some reason, changing the font size of the button changes the theme. I have to explicitly set its the typeface again.
+                        )
+                      ),
+                    ),
+
+                    Text(
+                      "This won't take long! 😊",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
+                      textAlign: TextAlign.center
                     )
 
-// <i class="fa-solid fa-gears" style="color: #74C0FC;"></i>
-
-                  // Critical Thinking - Blue gears
-                  // Memory - Green - Hexagon Nodes
-
                   ]
+
+
                 )
 
 

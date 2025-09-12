@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rheto/AppColors.dart';
+import 'package:rheto/AppTheme.dart';
 import 'package:rheto/screens/assessment_screen.dart';
 
 // Entry Point of Program
@@ -17,45 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Rheto',
-      theme: ThemeData(
-        // base ui colors are based off of redit lol
-        colorScheme: ColorScheme.dark(primary: AppColors.mainBackgroundColor),
-
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: AppColors.textColor,
-
-            textStyle: const TextStyle(fontFamily: 'Ntype82-R'),
-          ),
-        ),
-
-        textTheme: TextTheme(
-          headlineLarge: TextStyle(
-            fontFamily: 'Ntype82-R',
-            color: AppColors.textColor,
-          ),
-          headlineMedium: TextStyle(
-            fontFamily: 'Ntype82-R',
-            color: AppColors.textColor,
-          ),
-          headlineSmall: TextStyle(
-            fontFamily: 'Ntype82-R',
-            color: AppColors.textColor,
-          ),
-          bodyLarge: TextStyle(
-            fontFamily: 'Lettera',
-            color: AppColors.textColor,
-          ),
-          bodyMedium: TextStyle(
-            fontFamily: 'Lettera',
-            color: AppColors.textColor,
-          ),
-          bodySmall: TextStyle(
-            fontFamily: 'Lettera',
-            color: AppColors.textColor,
-          ),
-        ),
-      ),
+      theme: ,
       home: const MyHomePage(title: 'Rheto'),
     );
   }
