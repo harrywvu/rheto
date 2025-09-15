@@ -11,6 +11,18 @@ class AppTheme {
       // base ui colors are based off of redit lol
       colorScheme: ColorScheme.dark(primary: AppColors.mainBackgroundColor),
 
+      chipTheme: ChipThemeData(
+        labelStyle: const TextStyle(
+          fontFamily: 'Ntype82-R',
+          fontSize: 18,
+          color: AppColors.textColor,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18)
+        )
+
+      ),
+
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           foregroundColor: AppColors.textColor,
@@ -19,23 +31,11 @@ class AppTheme {
       ),
 
       textTheme: TextTheme(
-        headlineLarge: TextStyle(
-          fontFamily: 'Ntype82-R',
-          color: AppColors.textColor,
-        ),
-        headlineMedium: TextStyle(
-          fontFamily: 'Ntype82-R',
-          color: AppColors.textColor,
-        ),
-        headlineSmall: TextStyle(
-          fontFamily: 'Ntype82-R',
-          color: AppColors.textColor,
-        ),
+        headlineLarge: TextStyle(fontFamily: 'Ntype82-R',color: AppColors.textColor,),
+        headlineMedium: TextStyle(fontFamily: 'Ntype82-R',color: AppColors.textColor,),
+        headlineSmall: TextStyle(fontFamily: 'Ntype82-R',color: AppColors.textColor,),
         bodyLarge: TextStyle(fontFamily: 'Lettera', color: AppColors.textColor),
-        bodyMedium: TextStyle(
-          fontFamily: 'Lettera',
-          color: AppColors.textColor,
-        ),
+        bodyMedium: TextStyle(fontFamily: 'Lettera',color: AppColors.textColor),
         bodySmall: TextStyle(fontFamily: 'Lettera', color: AppColors.textColor),
       ),
     );

@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Rheto',
-      theme: ,
+      theme: AppTheme.darkTheme,
       home: const MyHomePage(title: 'Rheto'),
     );
   }
@@ -67,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 Text(
                   'AI-Powered Neuroscience-Based Training App',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
 
                 Text(
@@ -88,10 +88,14 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     );
                   },
-                  child: const Text('Get Started'),
 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF500073),
+                  ),
+
+                  child: Text(
+                    'Get Started',
+                    style: Theme.of(context).textTheme.headlineSmall
                   ),
                 ),
 
@@ -99,14 +103,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 Text(
                   'Take initial assessment before beginning',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),
 
             Text(
               'Welcome to Rheto',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],
         ),
