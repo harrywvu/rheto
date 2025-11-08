@@ -3,6 +3,7 @@ import 'package:rheto/main.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:rheto/screens/quiz_screen-critical-thinking.dart';
+import 'quiz_screen-memory-booster.dart';
 
 class AssessmentScreen extends StatefulWidget {
   const AssessmentScreen({super.key});
@@ -105,7 +106,21 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           ],
         );
       case 1: // Critical Thinking Trainer
-        return QuizScreen_Critical_Thinking();
+        return QuizScreen_Critical_Thinking(
+          onComplete: () => {
+            setState(() {
+              currentStep++;
+            })
+          },
+        );
+      case 2: 
+        return QuizScreenMemoryBooster(
+          onComplete: () => {
+            setState(() {
+              currentStep++;
+            })
+          },
+        ); 
       default:
         return Center(child: Text("Assessment Starting!"));
     }
@@ -125,6 +140,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
             // 1st child of the column -> Return & subtitle screen
             Row(
               children: [
+                // Press this to go back to home screen
                 IconButton(
                   // iconSize: ,
                   onPressed: () {

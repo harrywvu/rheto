@@ -1,5 +1,4 @@
-To do for today:
-        - Code refactor
-        - Initial Assessment
-        - Main Home Screen
-        
+this is my first time making a mobile app with flutter/dart. im just learning on the go. its been a while since i touched the project(3-4 weeks ago)
+I am lost. I have no idea how to proceed with the first feature which is the assessment portion. basically, i want to get the baseline cognitive stats of the user. I want to start with simple multiple choice quizes first but even with that im struggling. check the critical-thinking.txt for more info about this. i need help with the modelling, designing the code, etc. just an execution problem. i dont even know how to track the score. there will be 3 sections of this assessment, critical-thinking (right now), memory, and creativity. each will have different kinds of activities. i just started with critical-thinking cus its the easiest one. so...act like my senior developer god-programmer mentor and guide me on how to make this.
+
+for Cognitive Reflection Puzzles and Justification, i believe NLP will be used to score it. the better quality reasoning = higher points.

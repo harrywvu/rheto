@@ -1,11 +1,42 @@
+enum QuestionType { 
+  multipleChoice, 
+  textInput, 
+  longText 
+}
+
+enum QuestionCategory {
+  logic,
+  biasDetection,
+  cognitiveReflection,
+  justification,
+}
+
 class Question {
+  final String id;
+  final QuestionType type;
+  final QuestionCategory category;
   final String question;
-  final List<String> options;
-  final int correctAnswerIndex;
+
+// if question is multipleChoice
+  final List<String>? options;
+// index always starts at 0
+  final int? correctAnswerIndex;
+
+
+  final String? correctTextAnswer;
+  final List<String>? acceptableAnswers;
+
+  final int? maxLength;
 
   const Question({
+    required this.id,
+    required this.type,
+    required this.category,
     required this.question,
-    required this.options,
-    required this.correctAnswerIndex,
+    this.options,
+    this.correctAnswerIndex,
+    this.correctTextAnswer,
+    this.acceptableAnswers,
+    this.maxLength,
   });
 }

@@ -1,8 +1,8 @@
- 🧠 Critical Thinking Index (CTI) – Initial Assessment
+# 🧠 Critical Thinking Index (CTI) – Initial Assessment
 
-Goal: Establish baseline reasoning, reflection, and argument analysis.  
-Duration: ~3 minutes  
-Scoring Weights:  
+**Goal:** Establish baseline reasoning, reflection, and argument analysis.  
+**Duration:** ~3 minutes  
+**Scoring Weights:**  
 - Accuracy (Logic Challenge): 40%  
 - Bias Detection: 20%  
 - Cognitive Reflection: 20%  
@@ -10,9 +10,9 @@ Scoring Weights:
 
 ---
 
- 1. Logic Challenge (Accuracy – 3 Questions)
+## 1. Logic Challenge (Accuracy – 3 Questions)
 
- Q1
+### Q1
 All philosophers are thinkers. Some thinkers are skeptics.  
 Which conclusion is logically valid?  
 - a) All skeptics are philosophers  
@@ -20,11 +20,11 @@ Which conclusion is logically valid?
 - c) Some skeptics may be philosophers  
 - d) All thinkers are philosophers  
 
-Correct: c  
+**Correct:** c  
 
 ---
 
- Q2  
+### Q2  
 If Anna studies, then she passes the exam. Anna did not pass the exam.  
 What can we conclude?  
 - a) Anna must not have studied  
@@ -32,11 +32,11 @@ What can we conclude?
 - c) If Anna passed, then she studied  
 - d) No conclusion can be drawn  
 
-Correct: a  
+**Correct:** a  
 
 ---
 
- Q3  
+### Q3  
 Every poet is imaginative. No unimaginative person is an artist.  
 Which statement follows?  
 - a) All artists are poets  
@@ -44,15 +44,15 @@ Which statement follows?
 - c) All poets could be artists  
 - d) No poet is an artist  
 
-Correct: c  
+**Correct:** c  
 
-Scoring: % correct = Accuracy rate  
+**Scoring:** % correct = Accuracy rate  
 
 ---
 
- 2. Bias Detection Task (Bias Detection – 2 Questions)
+## 2. Bias Detection Task (Bias Detection – 2 Questions)
 
- Q1  
+### Q1  
 “This medication must work—it has thousands of 5-star reviews on social media.”  
 Identify the bias:  
 - a) Availability bias  
@@ -60,11 +60,11 @@ Identify the bias:
 - c) Authority bias  
 - d) Survivorship bias  
 
-Correct: b  
+**Correct:** b  
 
 ---
 
- Q2  
+### Q2  
 “The research cannot be valid because it was funded by a tech company.”  
 Identify the bias:  
 - a) Ad hominem  
@@ -72,56 +72,56 @@ Identify the bias:
 - c) Funding bias  
 - d) Genetic fallacy  
 
-Correct: d  
+**Correct:** d  
 
-Scoring: % correct identifications = Bias Detection rate  
+**Scoring:** % correct identifications = Bias Detection rate  
 
 ---
 
- 3. Cognitive Reflection Puzzles (Cognitive Reflection – 3 Harder Questions)
+## 3. Cognitive Reflection Puzzles (Cognitive Reflection – 3 Harder Questions)
 
- Q1  
+### Q1  
 A lily pad doubles in size every day. In 48 days, the pond is fully covered.  
 On which day is it half covered?  
 
-Correct: Day 47  
+**Correct:** Day 47  
 
 ---
 
- Q2  
+### Q2  
 In a race, you pass the runner in 2nd place.  
 What position are you in now?  
 
-Correct: 2nd place  
+**Correct:** 2nd place  
 
 ---
 
- Q3  
+### Q3  
 A library has 20 identical books. Each book costs $10, but a discount applies: for every 2 books purchased, 1 extra book is free.  
 How much does it cost to own all 20 books?  
 
-Correct reasoning: You pay for 14 books (14 paid + 7 free = 21 ≥ 20).  
-Answer: $140  
+**Correct reasoning:** You pay for 14 books (14 paid + 7 free = 21 ≥ 20).  
+**Answer:** $140  
 
-Scoring: Correct answers = higher reflection score  
+**Scoring:** Correct answers = higher reflection score  
 
 ---
 
- 4. Justification (Justification Quality – 1 Prompt)
+## 4. Justification (Justification Quality – 1 Prompt)
 
- Prompt  
-Choose one of your answers above. Explain your reasoning in 2–3 sentences.  
+### Prompt  
+Choose one of your answers above. Explain your reasoning in **2–3 sentences**.  
 
-Evaluation rubric (0–10):  
-- Clarity (0–3): Is reasoning stated in clear, concise language?  
-- Depth (0–3): Does reasoning show understanding beyond surface intuition?  
-- Logical structure (0–4): Are premises and conclusion linked logically?  
+**Evaluation rubric (0–10):**  
+- **Clarity (0–3):** Is reasoning stated in clear, concise language?  
+- **Depth (0–3):** Does reasoning show understanding beyond surface intuition?  
+- **Logical structure (0–4):** Are premises and conclusion linked logically?  
 
 Normalized to 20% weight.  
 
 ---
 
- ✅ Final Output
+## ✅ Final Output
 
 User receives:  
 - Total CTI Score (0–100)  
