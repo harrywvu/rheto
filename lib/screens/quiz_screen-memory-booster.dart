@@ -5,7 +5,12 @@ import 'package:rheto/hard-coded-lists/randomWords.dart';
 
 class QuizScreenMemoryBooster extends StatefulWidget {
   final VoidCallback onComplete;
-  const QuizScreenMemoryBooster({super.key, required this.onComplete});
+  final Function(Map<String, dynamic>)? onDataCollected;
+  const QuizScreenMemoryBooster({
+    super.key,
+    required this.onComplete,
+    this.onDataCollected,
+  });
 
 
   @override
@@ -147,10 +152,50 @@ class _QuizScreenMemoryBoosterState extends State<QuizScreenMemoryBooster> {
 
   // temporary
   void _onFinishDelayedRecall() {
-    print("User Answers: ${_immediateUserAnswers.join(", ")}");
-    print("User Answers: ${_delayedUserAnswers.join(", ")}");
+    // Debug logging for memory metrics
+    print("MEMORY METRICS DEBUG:");
+    print("Words List: ${_wordsList.join(", ")}");
+    print("Immediate Recall: ${_immediateUserAnswers.join(", ")}");
+    print("Delayed Recall: ${_delayedUserAnswers.join(", ")}");
     print("Immediate Recall Times: ${_immediateRecallTimes.join(", ")}");
     print("Delayed Recall Times: ${_delayedRecallTimes.join(", ")}");
+
+    // Calculate metrics
+    // Accuracy should be percentage (0-100), not absolute count
+    final immediateAccuracy = (_immediateUserAnswers.length / _wordsList.length) * 100;
+    final delayedAccuracy = (_delayedUserAnswers.length / _wordsList.length) * 100;
+    
+    // Retention curve is ratio of delayed to immediate recall (0-1)
+    final retentionCurve = _immediateUserAnswers.isEmpty
+        ? 0.0
+        : (_delayedUserAnswers.length / _immediateUserAnswers.length);
+    
+    // Average recall time - if no words recalled, use a high value (10 seconds)
+    // to ensure a low score
+    final averageRecallTime = _immediateRecallTimes.isEmpty
+        ? 10.0
+        : _immediateRecallTimes.reduce((a, b) => a + b) /
+            _immediateRecallTimes.length;
+            
+    // Debug logging for calculated metrics
+    print("CALCULATED METRICS:");
+    print("Immediate Accuracy: $immediateAccuracy%");
+    print("Delayed Accuracy: $delayedAccuracy%");
+    print("Retention Curve: $retentionCurve");
+    print("Average Recall Time: $averageRecallTime seconds");
+    print("Expected Score: ${(immediateAccuracy * retentionCurve) / (averageRecallTime / 10)}");
+
+    // Pass data back to parent
+    if (widget.onDataCollected != null) {
+      widget.onDataCollected!({
+        'immediateRecallAccuracy': immediateAccuracy,
+        'delayedRecallAccuracy': delayedAccuracy,
+        'retentionCurve': retentionCurve,
+        'averageRecallTime': averageRecallTime,
+        'immediateUserAnswers': _immediateUserAnswers.toList(),
+        'delayedUserAnswers': _delayedUserAnswers.toList(),
+      });
+    }
 
     widget.onComplete();
   }

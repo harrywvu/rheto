@@ -4,7 +4,12 @@ import 'package:rheto/models/questions.dart';
 
 class QuizScreen_Critical_Thinking extends StatefulWidget {
   final VoidCallback onComplete;
-  const QuizScreen_Critical_Thinking({super.key, required this.onComplete});
+  final Function(Map<String, dynamic>)? onDataCollected;
+  const QuizScreen_Critical_Thinking({
+    super.key,
+    required this.onComplete,
+    this.onDataCollected,
+  });
 
   @override
   State<QuizScreen_Critical_Thinking> createState() =>
@@ -17,7 +22,10 @@ class _QuizScreen_Critical_Thinking_State
   Map<String, dynamic> userAnswers = {
     // questionId -> answer
     // logic_1 -> 2
-  }; 
+  };
+  
+  // Track selected cognitive reflection question for justification
+  String? selectedReflectionQuestionId;
 
   final TextEditingController _textController = TextEditingController();
 
@@ -62,6 +70,13 @@ class _QuizScreen_Critical_Thinking_State
 
   // increase 
   void _goToNextStep() {
+    // Pass collected data back to parent, including selected reflection question
+    if (widget.onDataCollected != null) {
+      widget.onDataCollected!({
+        ...userAnswers,
+        'selectedReflectionQuestionId': selectedReflectionQuestionId,
+      });
+    }
     widget.onComplete();
   }
 
@@ -94,6 +109,14 @@ class _QuizScreen_Critical_Thinking_State
   //  IS ON THE LAST QUESTION 
   bool _canProceed() {
     final currentQ = criticalThinkingQuestions[currentQuestionIndex];
+    
+    // For justification questions, also check if a reflection question is selected
+    if (currentQ.category == QuestionCategory.justification) {
+      return selectedReflectionQuestionId != null &&
+          userAnswers.containsKey(currentQ.id) &&
+          (userAnswers[currentQ.id]?.toString().trim().isNotEmpty ?? false);
+    }
+    
     return userAnswers.containsKey(currentQ.id) &&
         (userAnswers[currentQ.id]?.toString().trim().isNotEmpty ?? false);
   }
@@ -200,6 +223,105 @@ class _QuizScreen_Critical_Thinking_State
   }
 
   Widget _buildAnswerWidget(Question question) {
+    // Special handling for justification questions
+    if (question.category == QuestionCategory.justification) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select a Cognitive Reflection question to expand on:',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontFamily: 'Lettera',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          DropdownButton<String>(
+            isExpanded: true,
+            value: selectedReflectionQuestionId,
+            hint: Text('Choose a question...'),
+            items: cognitiveReflectionQuestions.map((q) {
+              return DropdownMenuItem<String>(
+                value: q.id,
+                child: Text(
+                  q.question,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontFamily: 'Lettera',
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedReflectionQuestionId = value;
+              });
+            },
+          ),
+          if (selectedReflectionQuestionId != null) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF63E6BE).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF63E6BE),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your answer to this question:',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontFamily: 'Lettera',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    userAnswers[selectedReflectionQuestionId] ?? 'No answer provided',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Lettera',
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Now expand on your reasoning:',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontFamily: 'Lettera',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          TextField(
+            controller: _textController,
+            onChanged: _saveTextAnswer,
+            maxLines: 6,
+            maxLength: question.maxLength,
+            decoration: InputDecoration(
+              hintText: 'Explain your reasoning in 2-3 sentences...',
+              border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF74C0FC), width: 2),
+              ),
+            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
+          ),
+        ],
+      );
+    }
+    
     switch (question.type) {
       case QuestionType.multipleChoice:
         return Column(

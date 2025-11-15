@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:rheto/AppTheme.dart';
 import 'package:rheto/screens/assessment_screen.dart';
+import 'package:rheto/screens/home_screen.dart';
+import 'package:rheto/services/score_storage_service.dart';
+import 'package:rheto/services/scoring_service.dart';
 
 // Entry Point of Program
 void main() {
+  ScoringService.setBaseUrl('http://192.168.100.208:3000');
   runApp(const MyApp());
 }
 
@@ -34,6 +38,22 @@ class MyHomePage extends StatefulWidget {
 
 // where the logic exists
 class _MyHomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAssessmentStatus();
+  }
+
+  void _checkAssessmentStatus() async {
+    final hasCompleted = await ScoreStorageService.hasCompletedAssessment();
+    if (hasCompleted && mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   child: Text(
                     'Get Started',
-                    style: Theme.of(context).textTheme.headlineSmall
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                 ),
 

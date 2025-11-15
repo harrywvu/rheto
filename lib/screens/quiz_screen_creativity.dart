@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 
 class QuizScreenCreativity extends StatefulWidget {
   final VoidCallback onComplete;
-  const QuizScreenCreativity({super.key, required this.onComplete});
+  final Function(Map<String, dynamic>)? onDataCollected;
+  const QuizScreenCreativity({
+    super.key,
+    required this.onComplete,
+    this.onDataCollected,
+  });
 
   @override
   State<QuizScreenCreativity> createState() => _QuizScreenCreativityState();
@@ -143,6 +148,15 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
   void _onComplete() {
     print("User Ideas: ${_userIdeas.join(", ")}");
     print("Refined Idea: $_refinedIdea");
+    
+    // Pass data back to parent
+    if (widget.onDataCollected != null) {
+      widget.onDataCollected!({
+        'ideas': _userIdeas,
+        'refinedIdea': _refinedIdea,
+      });
+    }
+    
     widget.onComplete();
   }
 
