@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:rheto/screens/quiz_screen-critical-thinking.dart';
 import 'quiz_screen-memory-booster.dart';
+import 'quiz_screen_creativity.dart';
 
 class AssessmentScreen extends StatefulWidget {
   const AssessmentScreen({super.key});
@@ -110,19 +111,27 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           onComplete: () => {
             setState(() {
               currentStep++;
-            })
+            }),
           },
         );
-      case 2: 
+      case 2:
         return QuizScreenMemoryBooster(
           onComplete: () => {
             setState(() {
               currentStep++;
-            })
+            }),
           },
-        ); 
+        );
+      case 3:
+        return QuizScreenCreativity(
+          onComplete: () => {
+            setState(() {
+              currentStep++;
+            }),
+          },
+        );
       default:
-        return Center(child: Text("Assessment Starting!"));
+        return Center(child: Text("The fuck are you doing here?"));
     }
   }
 
@@ -168,4 +177,17 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       ),
     );
   }
+}
+
+Widget _buildResultScreen(context) {
+  return Row(
+    children: [
+      Text(
+        "Results",
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(fontFamily: 'Ntype82-R'),
+      ),
+    ],
+  );
 }
