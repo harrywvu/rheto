@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:rheto/services/score_storage_service.dart';
 
-class DomainDetailScreen extends StatelessWidget {
+class DomainDetailScreen extends StatefulWidget {
   final String domain;
 
   const DomainDetailScreen({
@@ -9,51 +11,129 @@ class DomainDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<DomainDetailScreen> createState() => _DomainDetailScreenState();
+}
+
+class _DomainDetailScreenState extends State<DomainDetailScreen> {
+  late Future<Map<String, double>> _scoresFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _scoresFuture = ScoreStorageService.getScores();
+  }
+
+  String _getScoreLevel(double score) {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Fair';
+    return 'Needs Improvement';
+  }
+
+  Color _getScoreColor(double score) {
+    if (score >= 80) return Color(0xFF63E6BE); // Green
+    if (score >= 60) return Color(0xFFFFD43B); // Yellow
+    if (score >= 40) return Color(0xFFFF922B); // Orange
+    return Color(0xFFFF6B6B); // Red
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 70),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with back button
-            Row(
+      body: FutureBuilder<Map<String, double>>(
+        future: _scoresFuture,
+        builder: (context, snapshot) {
+          final score = _getScoreForDomain(snapshot.data ?? {});
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 70),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: Icon(Icons.arrow_back),
+                // Header with back button
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: Icon(Icons.arrow_back),
+                    ),
+                    Text(
+                      _getDomainTitle(),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyLarge
+                          ?.copyWith(fontFamily: 'Ntype82-R'),
+                    ),
+                  ],
                 ),
-                Text(
-                  _getDomainTitle(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(fontFamily: 'Ntype82-R'),
+                SizedBox(height: 24),
+
+                // Domain Score Card
+                _buildDomainScoreCard(context, score),
+                SizedBox(height: 24),
+
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDomainContent(context),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 24),
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDomainContent(context),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
+  double _getScoreForDomain(Map<String, double> scores) {
+    switch (widget.domain) {
+      case 'critical_thinking':
+        return scores['criticalThinking'] ?? 0.0;
+      case 'memory':
+        return scores['memory'] ?? 0.0;
+      case 'creativity':
+        return scores['creativity'] ?? 0.0;
+      default:
+        return 0.0;
+    }
+  }
+
+  IconData _getDomainIcon() {
+    switch (widget.domain) {
+      case 'critical_thinking':
+        return FontAwesomeIcons.gears;
+      case 'memory':
+        return FontAwesomeIcons.lightbulb;
+      case 'creativity':
+        return FontAwesomeIcons.squareShareNodes;
+      default:
+        return FontAwesomeIcons.question;
+    }
+  }
+
+  Color _getDomainIconColor() {
+    switch (widget.domain) {
+      case 'critical_thinking':
+        return Color(0xFF74C0FC);
+      case 'memory':
+        return Color(0xFFFFD43B);
+      case 'creativity':
+        return Color(0xFF63E6BE);
+      default:
+        return Colors.grey;
+    }
+  }
+
   String _getDomainTitle() {
-    switch (domain) {
+    switch (widget.domain) {
       case 'critical_thinking':
         return 'Critical Thinking Index';
       case 'memory':
@@ -65,8 +145,90 @@ class DomainDetailScreen extends StatelessWidget {
     }
   }
 
+  Widget _buildDomainScoreCard(BuildContext context, double score) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[700]!),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _getDomainIconColor().withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: FaIcon(
+              _getDomainIcon(),
+              color: _getDomainIconColor(),
+              size: 24,
+            ),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getDomainTitle(),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(fontFamily: 'Ntype82-R'),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  _getDomainDescription(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'Lettera',
+                        color: Colors.grey[500],
+                      ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${score.toStringAsFixed(0)}',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'NType82-R',
+                      color: _getScoreColor(score),
+                    ),
+              ),
+              Text(
+                _getScoreLevel(score),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontFamily: 'Lettera',
+                      color: _getScoreColor(score),
+                    ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getDomainDescription() {
+    switch (widget.domain) {
+      case 'critical_thinking':
+        return 'Logic, reasoning, and bias detection';
+      case 'memory':
+        return 'Recall accuracy and retention';
+      case 'creativity':
+        return 'Divergent thinking and originality';
+      default:
+        return '';
+    }
+  }
+
   Widget _buildDomainContent(BuildContext context) {
-    switch (domain) {
+    switch (widget.domain) {
       case 'critical_thinking':
         return _buildCriticalThinkingContent(context);
       case 'memory':

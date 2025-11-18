@@ -133,7 +133,7 @@ class ResultsScreen extends StatelessWidget {
 
             SizedBox(height: 24),
 
-            // Return Home Button
+            // Proceed Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -158,7 +158,7 @@ class ResultsScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: Text(
-                  'Return to Home',
+                  'Proceed',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
