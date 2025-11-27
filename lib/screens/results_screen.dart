@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:rheto/services/score_storage_service.dart';
+import 'package:rheto/services/progress_service.dart';
 import 'home_screen.dart';
 
 class ResultsScreen extends StatelessWidget {
@@ -8,6 +9,9 @@ class ResultsScreen extends StatelessWidget {
   final double memoryScore;
   final double creativityScore;
   final VoidCallback onReturnHome;
+  final Map<String, double> criticalThinkingMetrics;
+  final Map<String, double> memoryMetrics;
+  final Map<String, double> creativityMetrics;
 
   const ResultsScreen({
     super.key,
@@ -15,10 +19,28 @@ class ResultsScreen extends StatelessWidget {
     required this.memoryScore,
     required this.creativityScore,
     required this.onReturnHome,
+    this.criticalThinkingMetrics = const {},
+    this.memoryMetrics = const {},
+    this.creativityMetrics = const {},
   });
 
+  // Calculate domain scores from metrics (source of truth)
+  double _calculateDomainScore(Map<String, double> metrics) {
+    if (metrics.isEmpty) return 0.0;
+    final sum = metrics.values.reduce((a, b) => a + b);
+    return sum / metrics.length;
+  }
+
+  double get criticalThinkingDomainScore =>
+      _calculateDomainScore(criticalThinkingMetrics);
+  double get memoryDomainScore => _calculateDomainScore(memoryMetrics);
+  double get creativityDomainScore => _calculateDomainScore(creativityMetrics);
+
   double get averageScore =>
-      (criticalThinkingScore + memoryScore + creativityScore) / 3;
+      (criticalThinkingDomainScore +
+          memoryDomainScore +
+          creativityDomainScore) /
+      3;
 
   String _getScoreLevel(double score) {
     if (score >= 80) return 'Excellent';
@@ -47,10 +69,9 @@ class ResultsScreen extends StatelessWidget {
               children: [
                 Text(
                   'Your Results',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(fontFamily: 'Ntype82-R'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontFamily: 'Ntype82-R'),
                 ),
               ],
             ),
@@ -69,26 +90,26 @@ class ResultsScreen extends StatelessWidget {
                   Text(
                     'Overall Baseline Score',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontFamily: 'Lettera',
-                          color: Colors.grey[400],
-                        ),
+                      fontFamily: 'Lettera',
+                      color: Colors.grey[400],
+                    ),
                   ),
                   SizedBox(height: 16),
                   Text(
                     '${averageScore.toStringAsFixed(1)}/100',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontFamily: 'NType82-R',
-                          color: _getScoreColor(averageScore),
-                          fontSize: 48,
-                        ),
+                      fontFamily: 'NType82-R',
+                      color: _getScoreColor(averageScore),
+                      fontSize: 48,
+                    ),
                   ),
                   SizedBox(height: 8),
                   Text(
                     _getScoreLevel(averageScore),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontFamily: 'Lettera',
-                          color: _getScoreColor(averageScore),
-                        ),
+                      fontFamily: 'Lettera',
+                      color: _getScoreColor(averageScore),
+                    ),
                   ),
                 ],
               ),
@@ -107,7 +128,7 @@ class ResultsScreen extends StatelessWidget {
                       icon: FontAwesomeIcons.gears,
                       iconColor: Color(0xFF74C0FC),
                       title: 'Critical Thinking',
-                      score: criticalThinkingScore,
+                      score: criticalThinkingDomainScore,
                       description: 'Logic, reasoning, and bias detection',
                     ),
                     _buildDomainCard(
@@ -115,7 +136,7 @@ class ResultsScreen extends StatelessWidget {
                       icon: FontAwesomeIcons.lightbulb,
                       iconColor: Color(0xFFFFD43B),
                       title: 'Memory Efficiency',
-                      score: memoryScore,
+                      score: memoryDomainScore,
                       description: 'Recall accuracy and retention',
                     ),
                     _buildDomainCard(
@@ -123,7 +144,7 @@ class ResultsScreen extends StatelessWidget {
                       icon: FontAwesomeIcons.squareShareNodes,
                       iconColor: Color(0xFF63E6BE),
                       title: 'Creativity',
-                      score: creativityScore,
+                      score: creativityDomainScore,
                       description: 'Divergent thinking and originality',
                     ),
                   ],
@@ -138,17 +159,31 @@ class ResultsScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  // Save scores to persistent storage
-                  await ScoreStorageService.saveScores(
-                    criticalThinkingScore: criticalThinkingScore,
-                    memoryScore: memoryScore,
-                    creativityScore: creativityScore,
+                  // Use metrics directly (they are the source of truth)
+                  final finalCTMetrics = criticalThinkingMetrics;
+                  final finalMemMetrics = memoryMetrics;
+                  final finalCreMetrics = creativityMetrics;
+
+                  // Save metrics to ScoreStorageService
+                  await ScoreStorageService.saveMetrics(
+                    criticalThinkingMetrics: finalCTMetrics,
+                    memoryMetrics: finalMemMetrics,
+                    creativityMetrics: finalCreMetrics,
                   );
-                  
+
+                  // Save baseline metrics to UserProgress
+                  await ProgressService.updateBaselineMetrics(
+                    criticalThinkingMetrics: finalCTMetrics,
+                    memoryMetrics: finalMemMetrics,
+                    creativityMetrics: finalCreMetrics,
+                  );
+
                   // Navigate to home screen
                   if (context.mounted) {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
                       (route) => false,
                     );
                   }
@@ -191,11 +226,7 @@ class ResultsScreen extends StatelessWidget {
               color: iconColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: FaIcon(
-              icon,
-              color: iconColor,
-              size: 24,
-            ),
+            child: FaIcon(icon, color: iconColor, size: 24),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -204,18 +235,17 @@ class ResultsScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(fontFamily: 'Ntype82-R'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontFamily: 'Ntype82-R'),
                 ),
                 SizedBox(height: 4),
                 Text(
                   description,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Lettera',
-                        color: Colors.grey[500],
-                      ),
+                    fontFamily: 'Lettera',
+                    color: Colors.grey[500],
+                  ),
                 ),
               ],
             ),
@@ -227,16 +257,16 @@ class ResultsScreen extends StatelessWidget {
               Text(
                 '${score.toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontFamily: 'NType82-R',
-                      color: _getScoreColor(score),
-                    ),
+                  fontFamily: 'NType82-R',
+                  color: _getScoreColor(score),
+                ),
               ),
               Text(
                 _getScoreLevel(score),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontFamily: 'Lettera',
-                      color: _getScoreColor(score),
-                    ),
+                  fontFamily: 'Lettera',
+                  color: _getScoreColor(score),
+                ),
               ),
             ],
           ),

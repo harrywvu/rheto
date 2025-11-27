@@ -30,6 +30,11 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
   double creativityScore = 0;
   bool isScoring = false;
 
+  // Store individual metrics from scoring
+  Map<String, double> criticalThinkingMetrics = {};
+  Map<String, double> memoryMetrics = {};
+  Map<String, double> creativityMetrics = {};
+
   Widget getStepWidget(int step) {
     switch (step) {
       case 0:
@@ -144,12 +149,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       case 3:
         return QuizScreenCreativity(
           onComplete: () async {
-            creativityData = {}; // Will be set by callback
             // Trigger scoring after creativity quiz
+            // creativityData is already set by onDataCollected callback
+            print('About to score. Creativity data: $creativityData');
             await _performScoring();
           },
           onDataCollected: (data) {
             creativityData = data;
+            print('Creativity data collected: $creativityData');
           },
         );
       case 4:
@@ -161,6 +168,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           criticalThinkingScore: criticalThinkingScore,
           memoryScore: memoryScore,
           creativityScore: creativityScore,
+          criticalThinkingMetrics: criticalThinkingMetrics,
+          memoryMetrics: memoryMetrics,
+          creativityMetrics: creativityMetrics,
           onReturnHome: () {
             Navigator.pop(context);
           },
@@ -224,7 +234,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     // Calculate score based on correct answers
     int totalQuestions = 0;
     int correctAnswers = 0;
-    
+
     // Score logic questions
     for (var question in logicQuestions) {
       totalQuestions++;
@@ -233,7 +243,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         correctAnswers++;
       }
     }
-    
+
     // Score bias detection questions
     for (var question in biasDetectionQuestions) {
       totalQuestions++;
@@ -242,7 +252,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         correctAnswers++;
       }
     }
-    
+
     // Score cognitive reflection questions
     for (var question in cognitiveReflectionQuestions) {
       totalQuestions++;
@@ -250,53 +260,86 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       if (userAnswer != null) {
         if (question.type == QuestionType.textInput) {
           final normalizedAnswer = userAnswer.toString().toLowerCase().trim();
-          if (question.acceptableAnswers?.any((acceptable) => acceptable.toLowerCase().trim() == normalizedAnswer) ?? false) {
+          if (question.acceptableAnswers?.any(
+                (acceptable) =>
+                    acceptable.toLowerCase().trim() == normalizedAnswer,
+              ) ??
+              false) {
             correctAnswers++;
           }
         }
       }
     }
-    
+
     // Calculate simple score (0-100)
-    double simpleScore = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 50.0;
+    double simpleScore = totalQuestions > 0
+        ? (correctAnswers / totalQuestions) * 100
+        : 50.0;
 
     // Try to score justification with AI if available
     if (criticalThinkingAnswers.containsKey('justification_1')) {
       try {
         final justificationText =
             criticalThinkingAnswers['justification_1'] as String;
-        
+
         // Get the selected reflection question and answer for context
-        final selectedReflectionId = 
+        final selectedReflectionId =
             criticalThinkingAnswers['selectedReflectionQuestionId'] as String?;
         String? reflectionQuestion;
         String? reflectionAnswer;
-        
+
         if (selectedReflectionId != null) {
-          // Find the reflection question from the questions list
-          final reflectionQ = criticalThinkingAnswers.entries
-              .where((e) => e.key == selectedReflectionId)
-              .firstOrNull;
-          
-          if (reflectionQ != null) {
-            reflectionAnswer = reflectionQ.value.toString();
-            // Get the question text
+          // Look up the selected reflection answer directly from the map
+          final selectedAnswer = criticalThinkingAnswers[selectedReflectionId];
+          if (selectedAnswer != null) {
+            reflectionAnswer = selectedAnswer.toString();
+            // Use the selectedReflectionId as the question identifier/context
             reflectionQuestion = selectedReflectionId;
           }
         }
-        
+
         final scores = await ScoringService.scoreJustification(
           question: 'Explain your reasoning',
           userAnswer: justificationText,
           reflectionQuestion: reflectionQuestion,
           reflectionAnswer: reflectionAnswer,
         );
+
+        // Extract individual metrics from AI scoring
+        final clarity = (scores['clarity'] as num? ?? 0).toDouble();
+        final depth = (scores['depth'] as num? ?? 0).toDouble();
+
+        // Store metrics (convert from 0-10 scale to 0-100)
+        criticalThinkingMetrics = {
+          'Accuracy': ((simpleScore * 0.8) + (clarity * 10))
+              .clamp(0, 100)
+              .toDouble(),
+          'Bias Detection': (depth * 10).clamp(0, 100).toDouble(),
+          'Reflection': simpleScore,
+          'Justification Quality': (clarity * 10).clamp(0, 100).toDouble(),
+        };
+
         final justificationScore = scores['total'] ?? 70.0;
         // Weight: 80% simple score, 20% justification
         simpleScore = (simpleScore * 0.8) + (justificationScore * 0.2);
       } catch (e) {
         print('Error scoring justification: $e');
+        // Fallback: use simple score for all metrics
+        criticalThinkingMetrics = {
+          'Accuracy': simpleScore,
+          'Bias Detection': simpleScore,
+          'Reflection': simpleScore,
+          'Justification Quality': simpleScore,
+        };
       }
+    } else {
+      // No justification: use simple score for all metrics
+      criticalThinkingMetrics = {
+        'Accuracy': simpleScore,
+        'Bias Detection': simpleScore,
+        'Reflection': simpleScore,
+        'Justification Quality': simpleScore,
+      };
     }
 
     return simpleScore;
@@ -305,16 +348,20 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
   Future<double> _scoreMemory() async {
     // Get memory metrics from collected data
     // If no data available, use zeros to ensure a low score
-    double immediateRecallAccuracy = memoryData['immediateRecallAccuracy'] ?? 0.0;
+    double immediateRecallAccuracy =
+        memoryData['immediateRecallAccuracy'] ?? 0.0;
     double retentionCurve = memoryData['retentionCurve'] ?? 0.0;
-    double averageRecallTime = memoryData['averageRecallTime'] ?? 10.0; // High recall time = lower score
-    
+    double averageRecallTime =
+        memoryData['averageRecallTime'] ??
+        10.0; // High recall time = lower score
+
     // Debug logging for memory scoring
     print("ASSESSMENT MEMORY SCORING:");
     print("Memory Data: $memoryData");
     print("Immediate Recall Accuracy: $immediateRecallAccuracy");
     print("Retention Curve: $retentionCurve");
     print("Average Recall Time: $averageRecallTime");
+    print("Keys in memoryData: ${memoryData.keys.toList()}");
 
     try {
       final scores = await ScoringService.scoreMemory(
@@ -322,15 +369,50 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         retentionCurve: retentionCurve,
         averageRecallTime: averageRecallTime,
       );
+
+      // Extract individual metrics
+      memoryMetrics = {
+        'Recall Accuracy': immediateRecallAccuracy.clamp(0, 100).toDouble(),
+        'Recall Latency': ((100 - (averageRecallTime * 10).clamp(0, 100)).clamp(
+          0,
+          100,
+        )).toDouble(),
+        'Retention Curve': retentionCurve.clamp(0, 100).toDouble(),
+        'Item Mastery': (scores['total'] ?? 0.0)
+            .toDouble()
+            .clamp(0, 100)
+            .toDouble(),
+      };
+
       return (scores['total'] ?? 0.0).toDouble();
     } catch (e) {
       print('Error scoring memory: $e');
       // Calculate score locally if API fails
-      if (immediateRecallAccuracy <= 0) return 0.0;
-      
+      if (immediateRecallAccuracy <= 0) {
+        memoryMetrics = {
+          'Recall Accuracy': 0,
+          'Recall Latency': 0,
+          'Retention Curve': 0,
+          'Item Mastery': 0,
+        };
+        return 0.0;
+      }
+
       // Use the memory efficiency score formula from the guide
       final safeRecallTime = averageRecallTime <= 0 ? 10.0 : averageRecallTime;
-      final score = (immediateRecallAccuracy * retentionCurve) / (safeRecallTime / 10);
+      final score =
+          (immediateRecallAccuracy * retentionCurve) / (safeRecallTime / 10);
+
+      memoryMetrics = {
+        'Recall Accuracy': immediateRecallAccuracy.clamp(0, 100).toDouble(),
+        'Recall Latency': ((100 - (safeRecallTime * 10).clamp(0, 100)).clamp(
+          0,
+          100,
+        )).toDouble(),
+        'Retention Curve': retentionCurve.clamp(0, 100).toDouble(),
+        'Item Mastery': score.clamp(0, 100).toDouble(),
+      };
+
       return score.clamp(0.0, 100.0);
     }
   }
@@ -344,14 +426,50 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         ideas: ideas,
         refinedIdea: refinedIdea.isNotEmpty ? refinedIdea : null,
       );
+
+      // Extract individual metrics from AI scoring
+      final fluency = (scores['fluency'] as num? ?? 0).toDouble();
+      final flexibility = (scores['flexibility'] as num? ?? 0).toDouble();
+      final originality = (scores['originality'] as num? ?? 0).toDouble();
+      final refinement = (scores['refinement_gain'] as num? ?? 0).toDouble();
+
+      // Debug logging
+      print('CREATIVITY SCORING DEBUG:');
+      print('Raw scores: $scores');
+      print(
+        'Fluency: $fluency, Flexibility: $flexibility, Originality: $originality, Refinement: $refinement',
+      );
+
+      // Store metrics (convert from 0-10 scale to 0-100)
+      creativityMetrics = {
+        'Fluency': (fluency * 10).clamp(0, 100).toDouble(),
+        'Flexibility': (flexibility * 10).clamp(0, 100).toDouble(),
+        'Originality': (originality * 10).clamp(0, 100).toDouble(),
+        'Refinement': (refinement * 10).clamp(0, 100).toDouble(),
+      };
+      print('Creativity metrics: $creativityMetrics');
+      print('Total score: ${scores['total']}');
+
       return (scores['total'] ?? 0.0).toDouble();
     } catch (e) {
       print('Error scoring creativity: $e');
-      
+
       // Calculate a basic score based on number of ideas and refinement
-      final ideasScore = ideas.isEmpty ? 0.0 : (ideas.length * 5).clamp(0.0, 50.0);
+      final ideasScore = ideas.isEmpty
+          ? 0.0
+          : (ideas.length * 5).clamp(0.0, 50.0);
       final refinementScore = refinedIdea.isEmpty ? 0.0 : 20.0;
-      return (ideasScore + refinementScore).clamp(0.0, 100.0);
+      final totalScore = (ideasScore + refinementScore).clamp(0.0, 100.0);
+
+      // Fallback metrics
+      creativityMetrics = {
+        'Fluency': ideasScore.toDouble(),
+        'Flexibility': (ideasScore * 0.8).toDouble(),
+        'Originality': (ideasScore * 0.7).toDouble(),
+        'Refinement': refinementScore.toDouble(),
+      };
+
+      return totalScore;
     }
   }
 

@@ -1,9 +1,23 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import express from 'express';
 import cors from 'cors';
 import { HfInference } from '@huggingface/inference';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: `${__dirname}/../.env` });
+
 const app = express();
+
+if (!process.env.HF_TOKEN) {
+  console.error('ERROR: HF_TOKEN environment variable is not set!');
+  console.error('Please add HF_TOKEN to your .env file');
+  process.exit(1);
+}
+
 const client = new HfInference(process.env.HF_TOKEN, {
   apiUrl: 'https://router.huggingface.co/hf-inference'
 });
@@ -11,7 +25,43 @@ const client = new HfInference(process.env.HF_TOKEN, {
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Parse JSON response from AI, with fallback extraction
+ */
+function parseAIResponse(responseText) {
+  try {
+    return JSON.parse(responseText);
+  } catch (parseError) {
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    throw new Error('Could not parse JSON from AI response');
+  }
+}
+
+/**
+ * Validate and clamp score object against expected keys (0-5 range)
+ */
+function validateScores(scores, expectedKeys, maxScore = 5) {
+  for (const key of expectedKeys) {
+    if (typeof scores[key] !== 'number') {
+      throw new Error(`Invalid score format: ${key} is not a number`);
+    }
+    // Clamp to 0-maxScore range
+    scores[key] = Math.max(0, Math.min(maxScore, Math.round(scores[key])));
+  }
+}
+
+// ============================================================================
+// ENDPOINTS
+// ============================================================================
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -30,51 +80,25 @@ app.post('/score-justification', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content:
-            'You are an AI grader. Respond ONLY with valid JSON. No explanations, no extra text. JSON keys must be: clarity, depth, logical_structure. All values are integers from 0-10.',
+          content: 'You are a strict AI grader with high standards. Be critical and demanding. Respond ONLY with valid JSON. No explanations, no extra text. JSON keys must be: clarity, depth, logical_structure. All values are integers from 0-10. Most answers should score below 7.',
         },
         {
           role: 'user',
-          content: `
-Question: ${question}
-User answer: ${userAnswer}
-
-Evaluation rubric (0–10):
-Clarity (0–3): Is reasoning stated in clear, concise language?
-Depth (0–3): Does reasoning show understanding beyond surface intuition?
-Logical structure (0–4): Are premises and conclusion linked logically?
-
-Reply ONLY with JSON in this format:
-{
-  "clarity": <number 0-3>,
-  "depth": <number 0-3>,
-  "logical_structure": <number 0-4>
-}
-          `,
+          content: `Question: ${question}\nUser answer: ${userAnswer}\n\nGrade this answer STRICTLY on:\n- Clarity (0-10): Is it crystal clear? Deduct heavily for any ambiguity or vagueness. Most answers get 3-6.\n- Depth (0-10): Is it thorough and insightful? Deduct heavily for surface-level answers. Most answers get 2-5.\n- Logical Structure (0-10): Is the reasoning sound and well-organized? Be strict. Most answers get 0-2.\n\nBe harsh. Most answers should score low. Respond with JSON: {"clarity": X, "depth": X, "logical_structure": X}`,
         },
       ],
     });
 
-    const responseText = chatCompletion.choices[0].message.content;
-    const scores = JSON.parse(responseText);
+    const scores = parseAIResponse(chatCompletion.choices[0].message.content);
+    validateScores(scores, ['clarity', 'depth', 'logical_structure'], 10);
 
-    // Validate scores
-    if (
-      typeof scores.clarity !== 'number' ||
-      typeof scores.depth !== 'number' ||
-      typeof scores.logical_structure !== 'number'
-    ) {
-      throw new Error('Invalid score format from AI');
-    }
-
-    // Calculate total (0-10)
-    const total = (scores.clarity + scores.depth + scores.logical_structure) / 10;
+    const total = Math.round((scores.clarity + scores.depth + scores.logical_structure) / 3 * 10);
 
     res.json({
       clarity: scores.clarity,
       depth: scores.depth,
       logical_structure: scores.logical_structure,
-      total: Math.round(total * 100) / 100,
+      total,
     });
   } catch (error) {
     console.error('Error scoring justification:', error);
@@ -96,61 +120,31 @@ app.post('/score-creativity', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content:
-            'You are a creativity evaluator. Respond ONLY with valid JSON. No explanations, no extra text. JSON keys must be: fluency, flexibility, originality, refinement_gain. All values are integers from 0-10.',
+          content: 'You are a strict creativity evaluator with high standards. Be critical and demanding. Respond ONLY with valid JSON. No explanations, no extra text. JSON keys must be: fluency, flexibility, originality, refinement_quality. All values are integers from 0-10. Most answers should score below 6.',
         },
         {
           role: 'user',
-          content: `
-User's creative ideas for uses of a brick:
-${ideas.map((idea, i) => `${i + 1}. ${idea}`).join('\n')}
-
-${refinedIdea ? `Refined idea: ${refinedIdea}` : ''}
-
-Evaluate based on:
-Fluency (0–10): Number and diversity of ideas (count of valid unique ideas)
-Flexibility (0–10): Range of conceptual categories covered
-Originality (0–10): Rarity and uniqueness of ideas
-Refinement Gain (0–10): Quality improvement if refined idea provided, else 0
-
-Reply ONLY with JSON in this format:
-{
-  "fluency": <number 0-10>,
-  "flexibility": <number 0-10>,
-  "originality": <number 0-10>,
-  "refinement_gain": <number 0-10>
-}
-          `,
+          content: `User's creative ideas:\n${ideas.map((idea, i) => `${i + 1}. ${idea}`).join('\n')}\n${refinedIdea ? `\nRefined/synthesized idea: ${refinedIdea}` : '\nNo refined idea provided.'}\n\nEvaluate STRICTLY on:\n- Fluency (0-10): Number and variety of ideas\n- Flexibility (0-10): Diversity of idea categories\n- Originality (0-10): How novel and unique the ideas are\n- Refinement Quality (0-10): Quality of the refined/synthesized idea${refinedIdea ? '' : ' (score 0 if none provided)'}\n\nBe very critical. Reply ONLY with JSON: {"fluency": X, "flexibility": X, "originality": X, "refinement_quality": X}`,
         },
       ],
     });
 
-    const responseText = chatCompletion.choices[0].message.content;
-    const scores = JSON.parse(responseText);
+    const scores = parseAIResponse(chatCompletion.choices[0].message.content);
+    validateScores(scores, ['fluency', 'flexibility', 'originality', 'refinement_quality']);
 
-    // Validate scores
-    if (
-      typeof scores.fluency !== 'number' ||
-      typeof scores.flexibility !== 'number' ||
-      typeof scores.originality !== 'number' ||
-      typeof scores.refinement_gain !== 'number'
-    ) {
-      throw new Error('Invalid score format from AI');
-    }
-
-    // Calculate weighted total (0-100)
-    const total =
+    const total = Math.round(
       scores.fluency * 0.3 +
       scores.flexibility * 0.25 +
       scores.originality * 0.25 +
-      scores.refinement_gain * 0.2;
+      scores.refinement_quality * 0.2
+    );
 
     res.json({
       fluency: scores.fluency,
       flexibility: scores.flexibility,
       originality: scores.originality,
-      refinement_gain: scores.refinement_gain,
-      total: Math.round(total),
+      refinement_gain: scores.refinement_quality,
+      total,
     });
   } catch (error) {
     console.error('Error scoring creativity:', error);
@@ -158,16 +152,10 @@ Reply ONLY with JSON in this format:
   }
 });
 
-// Score memory efficiency using AI
+// Score memory efficiency
 app.post('/score-memory', async (req, res) => {
   try {
     const { immediateRecallAccuracy, retentionCurve, averageRecallTime } = req.body;
-    
-    // Debug logging
-    console.log('MEMORY SCORING REQUEST:');
-    console.log(`Immediate Recall Accuracy: ${immediateRecallAccuracy}`);
-    console.log(`Retention Curve: ${retentionCurve}`);
-    console.log(`Average Recall Time: ${averageRecallTime}`);
 
     if (
       typeof immediateRecallAccuracy !== 'number' ||
@@ -177,42 +165,201 @@ app.post('/score-memory', async (req, res) => {
       return res.status(400).json({ error: 'Missing or invalid metrics' });
     }
 
-    // Calculate MES using the formula: (Accuracy × Retention Curve Fit) ÷ Average Recall Time
-    // Handle edge cases:
-    // - If immediateRecallAccuracy is 0, the score should be 0
-    // - If retentionCurve is 0, the score should be very low
-    // - If averageRecallTime is 0, use a small value to avoid division by zero
-    
-    // First check if user recalled any words at all
+    // If no recall, score is 0
     if (immediateRecallAccuracy <= 0) {
       return res.json({
         immediateRecallAccuracy: 0,
         retentionCurve: 0,
         averageRecallTime: averageRecallTime || 10,
-        total: 0, // Zero score if nothing recalled
+        total: 0,
       });
     }
-    
-    // Safe averageRecallTime to avoid division by zero
+
+    // Calculate MES: (Accuracy × Retention Curve) ÷ (Average Recall Time / 10)
     const safeRecallTime = averageRecallTime <= 0 ? 10 : averageRecallTime;
-    
-    // Calculate MES
     const mes = (immediateRecallAccuracy * retentionCurve) / (safeRecallTime / 10);
-    const normalizedMES = Math.min(100, Math.max(0, mes));
-    
-    // Debug logging for result
-    console.log('MEMORY SCORING RESULT:');
-    console.log(`Raw MES: ${mes}`);
-    console.log(`Normalized MES: ${normalizedMES}`);
+    const total = Math.round(Math.min(100, Math.max(0, mes)));
 
     res.json({
       immediateRecallAccuracy: Math.round(immediateRecallAccuracy),
       retentionCurve: Math.round(retentionCurve),
       averageRecallTime: Math.round(averageRecallTime * 100) / 100,
-      total: Math.round(normalizedMES),
+      total,
     });
   } catch (error) {
     console.error('Error scoring memory:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Generate a unique micro-story with embedded contradictions
+app.post('/generate-contradiction-story', async (req, res) => {
+  try {
+    const { difficulty = 'medium', previousStories = [] } = req.body;
+
+    // Map difficulty to contradiction count and complexity
+    const difficultyConfig = {
+      easy: { minContradictions: 2, maxContradictions: 2, complexity: 'surface-level' },
+      medium: { minContradictions: 2, maxContradictions: 3, complexity: 'multi-layered' },
+      hard: { minContradictions: 3, maxContradictions: 4, complexity: 'philosophical' },
+    };
+
+    const config = difficultyConfig[difficulty] || difficultyConfig.medium;
+    const contradictionCount = Math.floor(
+      Math.random() * (config.maxContradictions - config.minContradictions + 1) +
+        config.minContradictions
+    );
+
+    // Contradiction types to vary across iterations
+    const contradictionTypes = [
+      'temporal',
+      'causal',
+      'motivation_inconsistency',
+      'hidden_assumption_shift',
+      'logical_impossibility',
+    ];
+
+    // Randomly select different contradiction types
+    const selectedTypes = [];
+    for (let i = 0; i < contradictionCount; i++) {
+      selectedTypes.push(
+        contradictionTypes[Math.floor(Math.random() * contradictionTypes.length)]
+      );
+    }
+
+    const chatCompletion = await client.chatCompletion({
+      model: 'openai/gpt-oss-20b:cheapest',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a creative writer specializing in crafting short narratives with hidden logical contradictions. 
+Your stories are 60-90 seconds to read (approximately 150-250 words). 
+Each story must contain exactly ${contradictionCount} subtle contradictions of types: ${selectedTypes.join(', ')}.
+The contradictions should be hidden but detectable by careful readers.
+Respond ONLY with valid JSON. No explanations, no extra text.
+JSON format: {"story": "...", "contradictions": [{"type": "...", "description": "..."}, ...], "difficulty": "${difficulty}"}`,
+        },
+        {
+          role: 'user',
+          content: `Generate a unique micro-story (60-90 seconds read time) with exactly ${contradictionCount} contradictions of these types: ${selectedTypes.join(', ')}.
+The contradictions should be:
+- Subtle but detectable (not obvious)
+- Varied in type (temporal, causal, motivation, assumption, logical impossibility)
+- Woven naturally into the narrative
+- Challenging for critical thinkers
+
+Make the story engaging and realistic. Here are previous stories to avoid repetition: ${
+            previousStories.length > 0
+              ? previousStories.slice(-3).join(' | ')
+              : 'None'
+          }
+
+Respond with JSON: {"story": "...", "contradictions": [{"type": "temporal/causal/motivation_inconsistency/hidden_assumption_shift/logical_impossibility", "description": "..."}, ...], "difficulty": "${difficulty}"}`,
+        },
+      ],
+    });
+
+    const result = parseAIResponse(chatCompletion.choices[0].message.content);
+
+    if (!result.story || !Array.isArray(result.contradictions)) {
+      throw new Error('Invalid story format from AI');
+    }
+
+    res.json({
+      story: result.story,
+      contradictions: result.contradictions,
+      difficulty: difficulty,
+      expectedContradictionCount: contradictionCount,
+    });
+  } catch (error) {
+    console.error('Error generating contradiction story:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Score contradiction detection and justification
+app.post('/score-contradictions', async (req, res) => {
+  try {
+    const { story, detectedContradictions, justification, expectedContradictions } = req.body;
+
+    if (!story || !Array.isArray(detectedContradictions) || !justification) {
+      return res.status(400).json({
+        error: 'Missing story, detectedContradictions array, or justification',
+      });
+    }
+
+    const chatCompletion = await client.chatCompletion({
+      model: 'openai/gpt-oss-20b:cheapest',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a strict critical thinking evaluator. Respond ONLY with valid JSON. No explanations, no extra text.
+JSON keys must be: accuracy_rate, bias_detection_rate, cognitive_reflection, justification_quality.
+Values are point awards: accuracy_rate (0-3), bias_detection_rate (0-2), cognitive_reflection (0-1), justification_quality (0-4).
+Be harsh and critical.`,
+        },
+        {
+          role: 'user',
+          content: `Story: "${story}"
+
+User detected these contradictions: ${detectedContradictions.map((c) => `"${c}"`).join(', ')}
+
+User's justification: "${justification}"
+
+Expected contradictions in the story: ${expectedContradictions ? expectedContradictions.join(', ') : 'Not specified'}
+
+Award points based on performance:
+
+ACCURACY RATE (0-3 points):
+- 3 points: User correctly identified all or nearly all real contradictions
+- 2 points: User identified most contradictions, minor misses
+- 1 point: User identified some contradictions but missed major ones
+- 0 points: User missed most or all contradictions
+
+BIAS DETECTION RATE (0-2 points):
+- 2 points: User caught assumption shifts, hidden biases, or logical fallacies
+- 1 point: User showed some awareness of bias but incomplete
+- 0 points: User missed biases entirely
+
+COGNITIVE REFLECTION (0-1 point):
+- 1 point: User showed signs of questioning first instinct (e.g., "I initially thought... but...")
+- 0 points: User provided surface-level analysis without reflection
+
+JUSTIFICATION QUALITY (0-4 points):
+- 4 points: Explanation is clear, well-structured, logically coherent, and insightful
+- 3 points: Good explanation with minor clarity issues
+- 2 points: Adequate explanation but somewhat vague or incomplete
+- 1 point: Weak explanation with significant gaps
+- 0 points: Incoherent or unrelated explanation
+
+Respond ONLY with JSON: {"accuracy_rate": X, "bias_detection_rate": X, "cognitive_reflection": X, "justification_quality": X}`,
+        },
+      ],
+    });
+
+    const scores = parseAIResponse(chatCompletion.choices[0].message.content);
+    
+    // Validate and clamp point values to their max ranges
+    scores.accuracy_rate = Math.max(0, Math.min(3, Math.round(scores.accuracy_rate)));
+    scores.bias_detection_rate = Math.max(0, Math.min(2, Math.round(scores.bias_detection_rate)));
+    scores.cognitive_reflection = Math.max(0, Math.min(1, Math.round(scores.cognitive_reflection)));
+    scores.justification_quality = Math.max(0, Math.min(4, Math.round(scores.justification_quality)));
+
+    // Calculate total points (max 10)
+    const totalPoints = scores.accuracy_rate + scores.bias_detection_rate + scores.cognitive_reflection + scores.justification_quality;
+    // Convert to 0-100 scale for activity score display
+    const total = Math.round((totalPoints / 10) * 100);
+
+    res.json({
+      accuracy_rate: scores.accuracy_rate,
+      bias_detection_rate: scores.bias_detection_rate,
+      cognitive_reflection: scores.cognitive_reflection,
+      justification_quality: scores.justification_quality,
+      total_points: totalPoints,
+      total: total,
+    });
+  } catch (error) {
+    console.error('Error scoring contradictions:', error);
     res.status(500).json({ error: error.message });
   }
 });
