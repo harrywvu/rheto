@@ -1,4 +1,4 @@
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:rheto/services/score_storage_service.dart';
 
@@ -235,7 +235,11 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
       future: _metricsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+            ),
+          );
         }
 
         if (!snapshot.hasData) {
@@ -273,16 +277,21 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
     BuildContext context,
     Map<String, double> metrics,
   ) {
+    // Filter out old "Refinement" metric for creativity
+    final displayMetrics = widget.domain == 'creativity'
+        ? Map.fromEntries(metrics.entries.where((e) => e.key != 'Refinement'))
+        : metrics;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(context, 'Your Performance Metrics'),
         SizedBox(height: 20),
-        _buildMetricsGrid(context, metrics),
+        _buildMetricsGrid(context, displayMetrics),
         SizedBox(height: 32),
         _buildSectionTitle(context, 'Detailed Breakdown'),
         SizedBox(height: 16),
-        ...metrics.entries.map((entry) {
+        ...displayMetrics.entries.map((entry) {
           return _buildMetricBar(context, entry.key, entry.value);
         }).toList(),
         SizedBox(height: 32),
@@ -294,6 +303,11 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
   }
 
   Widget _buildMetricsGrid(BuildContext context, Map<String, double> metrics) {
+    // Filter out old "Refinement" metric for creativity (keep only the 4 new metrics)
+    final filteredMetrics = widget.domain == 'creativity'
+        ? Map.fromEntries(metrics.entries.where((e) => e.key != 'Refinement'))
+        : metrics;
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -301,7 +315,7 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
       childAspectRatio: 1.2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      children: metrics.entries.map((entry) {
+      children: filteredMetrics.entries.map((entry) {
         return _buildMetricCard(context, entry.key, entry.value);
       }).toList(),
     );
@@ -545,7 +559,7 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
         _buildScoreFormula(
           context,
           formula:
-              '30% Fluency + 25% Flexibility + 25% Originality + 20% Refinement',
+              '25% Fluency + 25% Flexibility + 25% Originality + 25% Refinement Gain',
         ),
         SizedBox(height: 32),
         _buildSectionTitle(context, 'Key Metrics'),
@@ -568,8 +582,7 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
         _buildMetricItem(
           context,
           metric: 'Refinement Gain',
-          description:
-              'Quality improvement from initial ideas to refined concept',
+          description: 'Quality improvement and flow of ideas across domains',
         ),
         SizedBox(height: 32),
         _buildSectionTitle(context, 'What This Measures'),

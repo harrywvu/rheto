@@ -15,7 +15,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late Future<Map<String, dynamic>> _dashboardDataFuture;
   late PageController _pageController;
   int _currentNavIndex = 0;
@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _dashboardDataFuture = _loadDashboardData();
     _pageController = PageController();
     _pageController.addListener(_onPageChanged);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   void _onPageChanged() {
@@ -35,7 +36,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh dashboard data when app resumes (e.g., returning from activity)
+      setState(() {
+        _dashboardDataFuture = _loadDashboardData();
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     super.dispose();
@@ -86,7 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
       future: _dashboardDataFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+            ),
+          );
         }
 
         if (!snapshot.hasData) {

@@ -185,7 +185,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+          ),
           SizedBox(height: 24),
           Text(
             'Analyzing your responses...',
@@ -445,7 +447,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         'Fluency': (fluency * 10).clamp(0, 100).toDouble(),
         'Flexibility': (flexibility * 10).clamp(0, 100).toDouble(),
         'Originality': (originality * 10).clamp(0, 100).toDouble(),
-        'Refinement': (refinement * 10).clamp(0, 100).toDouble(),
+        'Refinement Gain': (refinement * 10).clamp(0, 100).toDouble(),
       };
       print('Creativity metrics: $creativityMetrics');
       print('Total score: ${scores['total']}');
@@ -466,7 +468,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         'Fluency': ideasScore.toDouble(),
         'Flexibility': (ideasScore * 0.8).toDouble(),
         'Originality': (ideasScore * 0.7).toDouble(),
-        'Refinement': refinementScore.toDouble(),
+        'Refinement Gain': refinementScore.toDouble(),
       };
 
       return totalScore;

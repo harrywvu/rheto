@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/module.dart';
 
-/// Reusable activity results dialog component
-/// Displays metrics, rewards, and provides optional review functionality
 class ActivityResultsDialog extends StatefulWidget {
   final String activityName;
   final double score;
@@ -32,7 +30,7 @@ class _ActivityResultsDialogState extends State<ActivityResultsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Colors.grey[850],
       title: Text(
         'Activity Complete! 🎉',
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -46,12 +44,10 @@ class _ActivityResultsDialogState extends State<ActivityResultsDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 16),
-            // Metrics section
             if (widget.metrics.isNotEmpty) ...[
               ..._buildMetricsSection(context),
               SizedBox(height: 24),
             ],
-            // Rewards section
             _buildRewardsSection(context),
             SizedBox(height: 16),
             Text(
@@ -171,7 +167,6 @@ class _ActivityResultsDialogState extends State<ActivityResultsDialog> {
   List<Widget> _buildActions(BuildContext context) {
     final actions = <Widget>[];
 
-    // Review button (if callback provided)
     if (widget.onReview != null) {
       actions.add(
         TextButton(
@@ -181,12 +176,10 @@ class _ActivityResultsDialogState extends State<ActivityResultsDialog> {
       );
     }
 
-    // Custom actions
     if (widget.customActions != null) {
       actions.addAll(widget.customActions!);
     }
 
-    // Continue button
     actions.add(
       TextButton(
         onPressed: widget.onContinue,
@@ -198,10 +191,7 @@ class _ActivityResultsDialogState extends State<ActivityResultsDialog> {
   }
 
   int _calculateCoinsEarned() {
-    // Default base reward is 50, but can vary by activity
-    // This uses the score to calculate proportional rewards
-    final baseReward = 50;
-    return (baseReward * (widget.score / 100)).round();
+    return (50 * (widget.score / 100)).round();
   }
 
   Color _getMetricColor(String metricName) {

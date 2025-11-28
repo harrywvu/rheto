@@ -9,6 +9,7 @@ enum ActivityType {
   brainstorming,
   refinement,
   contradictionHunter,
+  consequenceEngine,
 }
 
 class Module {
@@ -116,6 +117,16 @@ class Module {
           difficulty: 'Medium',
           estimatedTime: 5,
           baseReward: 50,
+        ),
+        Activity(
+          id: 'cr_consequence_engine',
+          type: ActivityType.consequenceEngine,
+          name: 'Consequence Engine',
+          description:
+              'Trace cascading consequences across domains from absurd premises\n\nMetrics: Fluency, Flexibility, Originality, Refinement Gain',
+          difficulty: 'Hard',
+          estimatedTime: 8,
+          baseReward: 75,
         ),
         Activity(
           id: 'cr_brainstorm',

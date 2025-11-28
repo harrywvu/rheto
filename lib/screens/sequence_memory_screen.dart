@@ -330,7 +330,7 @@ class _SequenceMemoryScreenState extends State<SequenceMemoryScreen> {
       appBar: AppBar(
         title: Text(widget.activity.name),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: FaIcon(FontAwesomeIcons.reply),
           onPressed: () {
             if (isInReview) {
               // If in review, go back to activity list
@@ -341,6 +341,39 @@ class _SequenceMemoryScreenState extends State<SequenceMemoryScreen> {
             }
           },
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: Colors.grey[900],
+                  title: const Text('Quit Activity?'),
+                  content: const Text(
+                    'Are you sure you want to quit? Your progress will not be saved.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'Quit',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),

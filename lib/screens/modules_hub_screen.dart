@@ -75,7 +75,11 @@ class _ModulesHubScreenState extends State<ModulesHubScreen> {
         future: _progressFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+              ),
+            );
           }
 
           if (!snapshot.hasData) {

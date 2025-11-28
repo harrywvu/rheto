@@ -25,13 +25,6 @@ const client = new HfInference(process.env.HF_TOKEN, {
 app.use(cors());
 app.use(express.json());
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Parse JSON response from AI, with fallback extraction
- */
 function parseAIResponse(responseText) {
   try {
     return JSON.parse(responseText);
@@ -44,29 +37,19 @@ function parseAIResponse(responseText) {
   }
 }
 
-/**
- * Validate and clamp score object against expected keys (0-5 range)
- */
 function validateScores(scores, expectedKeys, maxScore = 5) {
   for (const key of expectedKeys) {
     if (typeof scores[key] !== 'number') {
       throw new Error(`Invalid score format: ${key} is not a number`);
     }
-    // Clamp to 0-maxScore range
     scores[key] = Math.max(0, Math.min(maxScore, Math.round(scores[key])));
   }
 }
 
-// ============================================================================
-// ENDPOINTS
-// ============================================================================
-
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Score justification text using AI
 app.post('/score-justification', async (req, res) => {
   try {
     const { question, userAnswer } = req.body;
@@ -364,7 +347,151 @@ Respond ONLY with JSON: {"accuracy_rate": X, "bias_detection_rate": X, "cognitiv
   }
 });
 
+// ============================================================================
+// CONSEQUENCE ENGINE ENDPOINTS
+// ============================================================================
+
+// Generate an absurd premise for Consequence Engine
+app.post('/generate-premise', async (req, res) => {
+  try {
+    const { previousPremises = [] } = req.body;
+
+    const premisePrompt = `Generate ONE absurd, creative premise for a "Consequence Engine" game. The premise should be:
+- Physically impossible or highly unusual (e.g., "Gravity only works on Tuesdays", "Plants can now walk slowly")
+- Specific enough to trace consequences from (not vague)
+- Interesting enough to inspire creative thinking across domains
+- NOT similar to: ${previousPremises.length > 0 ? previousPremises.join(', ') : 'none yet'}
+
+Return ONLY the premise as a single sentence, no quotes, no explanation.`;
+
+    let chatCompletion;
+    try {
+      // Try with :cheapest first
+      chatCompletion = await client.chatCompletion({
+        model: 'openai/gpt-oss-20b:cheapest',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a creative premise generator. Generate absurd but specific premises. Respond with ONLY the premise, nothing else.',
+          },
+          {
+            role: 'user',
+            content: premisePrompt,
+          },
+        ],
+      });
+    } catch (fallbackError) {
+      // Fallback to base model without :cheapest
+      console.warn('Falling back to base model without :cheapest', fallbackError.message);
+      chatCompletion = await client.chatCompletion({
+        model: 'openai/gpt-oss-20b',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a creative premise generator. Generate absurd but specific premises. Respond with ONLY the premise, nothing else.',
+          },
+          {
+            role: 'user',
+            content: premisePrompt,
+          },
+        ],
+      });
+    }
+
+    const premise = chatCompletion.choices[0].message.content.trim();
+
+    res.json({ premise });
+  } catch (error) {
+    console.error('Error generating premise:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Score a consequence chain
+app.post('/score-consequences', async (req, res) => {
+  try {
+    const { premise, chain, chainIndex = 1 } = req.body;
+
+    if (!premise || !chain || !Array.isArray(chain) || chain.length === 0) {
+      return res.status(400).json({ error: 'Missing premise or chain' });
+    }
+
+    // chain is an array of 4 consequences: [personal, social, economic, ecological]
+    const chainText = chain.map((c, i) => `${i + 1}. ${c}`).join('\n');
+
+    const scoringPrompt = `You are evaluating a creative consequence chain for a game called "Consequence Engine".
+
+PREMISE: "${premise}"
+
+CONSEQUENCE CHAIN (Chain #${chainIndex}):
+${chainText}
+
+Evaluate this chain on FOUR metrics (each 0-5 points):
+
+1. FLUENCY (0-5): Did they produce enough quality ideas? 
+   - 5 pts: All 4 consequences are well-developed and complete
+   - 3-4 pts: 3-4 consequences present, mostly complete
+   - 1-2 pts: Incomplete or sparse ideas
+   - 0 pts: Barely any content
+
+2. FLEXIBILITY (0-5): Did they jump between different domains?
+   - 5 pts: Hit all 4 required domains (Personal → Social → Economic → Ecological) with clear transitions
+   - 3-4 pts: Hit 3 domains with some transitions
+   - 1-2 pts: Stuck in 1-2 domains mostly
+   - 0 pts: Only one domain
+
+3. ORIGINALITY (0-5): Did they surprise you? (Avoid clichés)
+   - 5 pts: Highly unexpected, creative, novel ideas (no obvious answers)
+   - 3-4 pts: Creative with some predictable elements
+   - 1-2 pts: Mostly predictable/cliché
+   - 0 pts: Very obvious, boring answers
+
+4. REFINEMENT GAIN (0-5): Does the story flow and connect?
+   - 5 pts: Masterpiece - final consequence weaves everything together perfectly, callbacks to earlier ideas
+   - 3-4 pts: Strong flow with some connections between steps
+   - 1-2 pts: Loose connections, some flow issues
+   - 0 pts: No connection between ideas
+
+Respond ONLY with JSON: {"fluency": X, "flexibility": X, "originality": X, "refinement_gain": X}`;
+
+    const chatCompletion = await client.chatCompletion({
+      model: 'openai/gpt-oss-20b:cheapest',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a strict creative evaluator. Be critical and demanding. Respond ONLY with valid JSON. No explanations, no extra text.',
+        },
+        {
+          role: 'user',
+          content: scoringPrompt,
+        },
+      ],
+    });
+
+    const scores = parseAIResponse(chatCompletion.choices[0].message.content);
+    validateScores(scores, ['fluency', 'flexibility', 'originality', 'refinement_gain'], 5);
+
+    // Calculate total score (0-100)
+    const totalPoints = scores.fluency + scores.flexibility + scores.originality + scores.refinement_gain;
+    const total = Math.round((totalPoints / 20) * 100);
+
+    res.json({
+      fluency: scores.fluency,
+      flexibility: scores.flexibility,
+      originality: scores.originality,
+      refinement_gain: scores.refinement_gain,
+      total_points: totalPoints,
+      total: total,
+    });
+  } catch (error) {
+    console.error('Error scoring consequences:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Rheto Scoring API running on port ${PORT}`);
 });
+

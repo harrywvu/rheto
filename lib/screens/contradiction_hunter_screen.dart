@@ -69,7 +69,7 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'difficulty': difficulty, 'previousStories': []}),
           )
-          .timeout(const Duration(seconds: 60));
+          .timeout(const Duration(seconds: 120));
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
@@ -434,15 +434,52 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
       appBar: AppBar(
         title: const Text('Contradiction Hunter'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const FaIcon(FontAwesomeIcons.reply),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: Colors.grey[900],
+                  title: const Text('Quit Activity?'),
+                  content: const Text(
+                    'Are you sure you want to quit? Your progress will not be saved.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'Quit',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<void>(
         future: _loadStoryFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+              ),
+            );
           }
 
           if (snapshot.hasError) {
@@ -709,7 +746,7 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.black,
+                                      Color(0xFF74C0FC),
                                     ),
                                   ),
                                 )

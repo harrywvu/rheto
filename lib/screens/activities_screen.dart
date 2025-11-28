@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:rheto/models/module.dart';
 import 'package:rheto/screens/contradiction_hunter_screen.dart';
 import 'package:rheto/screens/sequence_memory_screen.dart';
+import 'package:rheto/screens/consequence_engine_screen.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   final Module module;
@@ -514,6 +515,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         return 'Reorder story events in the correct sequence. Drag and drop event cards to arrange them chronologically, then submit to see your recall accuracy.';
       case ActivityType.ideaGeneration:
         return 'Generate creative uses or ideas for everyday objects. Think outside the box and come up with as many unique ideas as possible.';
+      case ActivityType.consequenceEngine:
+        return 'Given an absurd premise, trace 4 levels of cascading consequences across domains: Personal → Social → Economic → Ecological. Each consequence must logically flow from the previous level. Complete 2 full chains to finish. You can also remix from any level to explore alternate paths.';
       case ActivityType.brainstorming:
         return 'Collaborate on innovative solutions to real-world problems. Share ideas and build upon others\' suggestions to find the best solutions.';
       default:
@@ -535,6 +538,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         return 'Strengthen sequential memory and temporal reasoning through event ordering. This enhances hippocampal activity and supports memory consolidation.';
       case ActivityType.ideaGeneration:
         return 'Boost your creative thinking and divergent thinking abilities to generate innovative solutions.';
+      case ActivityType.consequenceEngine:
+        return 'Develop causal imagination and cross-domain thinking. This activates your Default Mode Network for mental simulation and strengthens DMN-FPN coupling for creative evaluation. Learn to trace complex consequences and think beyond obvious implications.';
       case ActivityType.brainstorming:
         return 'Develop collaborative creativity and learn to build upon ideas to create comprehensive solutions.';
       default:
@@ -563,6 +568,20 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => SequenceMemoryScreen(
+              activity: activity,
+              module: widget.module,
+              onComplete: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        );
+        break;
+      case ActivityType.consequenceEngine:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ConsequenceEngineScreen(
               activity: activity,
               module: widget.module,
               onComplete: () {

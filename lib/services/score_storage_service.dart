@@ -7,7 +7,6 @@ class ScoreStorageService {
   static const String _crMetricsKey = 'creativity_metrics';
   static const String _hasCompletedAssessmentKey = 'has_completed_assessment';
 
-  // Save metrics after assessment (overall score is calculated from metrics)
   static Future<void> saveMetrics({
     required Map<String, double> criticalThinkingMetrics,
     required Map<String, double> memoryMetrics,
@@ -20,7 +19,6 @@ class ScoreStorageService {
     await prefs.setBool(_hasCompletedAssessmentKey, true);
   }
 
-  // Get saved metrics
   static Future<Map<String, Map<String, double>>> getMetrics() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -44,14 +42,12 @@ class ScoreStorageService {
     };
   }
 
-  // Get calculated overall scores from metrics
   static Future<Map<String, double>> getScores() async {
     final metrics = await getMetrics();
 
     double _calculateAverage(Map<String, double> metricMap) {
       if (metricMap.isEmpty) return 0.0;
-      final sum = metricMap.values.reduce((a, b) => a + b);
-      return sum / metricMap.length;
+      return metricMap.values.reduce((a, b) => a + b) / metricMap.length;
     }
 
     return {
@@ -61,13 +57,11 @@ class ScoreStorageService {
     };
   }
 
-  // Check if user has completed assessment
   static Future<bool> hasCompletedAssessment() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_hasCompletedAssessmentKey) ?? false;
   }
 
-  // Clear all data (for testing or reset)
   static Future<void> clearScores() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_ctMetricsKey);
