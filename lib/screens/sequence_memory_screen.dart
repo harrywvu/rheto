@@ -321,6 +321,8 @@ class _SequenceMemoryScreenState extends State<SequenceMemoryScreen> {
         return 'memory';
       case ModuleType.creativity:
         return 'creativity';
+      case ModuleType.aiLaboratory:
+        return 'aiLaboratory';
     }
   }
 

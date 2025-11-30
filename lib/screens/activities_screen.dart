@@ -4,6 +4,7 @@ import 'package:rheto/models/module.dart';
 import 'package:rheto/screens/contradiction_hunter_screen.dart';
 import 'package:rheto/screens/sequence_memory_screen.dart';
 import 'package:rheto/screens/consequence_engine_screen.dart';
+import 'package:rheto/screens/concept_cartographer_screen.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   final Module module;
@@ -519,6 +520,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         return 'Given an absurd premise, trace 4 levels of cascading consequences across domains: Personal → Social → Economic → Ecological. Each consequence must logically flow from the previous level. Complete 2 full chains to finish. You can also remix from any level to explore alternate paths.';
       case ActivityType.brainstorming:
         return 'Collaborate on innovative solutions to real-world problems. Share ideas and build upon others\' suggestions to find the best solutions.';
+      case ActivityType.conceptCartographer:
+        return 'Build a knowledge map through 4 phases: (1) Share what you know about a topic, (2) Arrange concept pieces and draw connections, (3) Test your model with a scenario, (4) Teach back the concept in your own words. AI provides feedback at each step.';
       default:
         return 'Complete the activity by following the on-screen instructions.';
     }
@@ -542,6 +545,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         return 'Develop causal imagination and cross-domain thinking. This activates your Default Mode Network for mental simulation and strengthens DMN-FPN coupling for creative evaluation. Learn to trace complex consequences and think beyond obvious implications.';
       case ActivityType.brainstorming:
         return 'Develop collaborative creativity and learn to build upon ideas to create comprehensive solutions.';
+      case ActivityType.conceptCartographer:
+        return 'Develop deep conceptual understanding through active knowledge construction. Retrieval practice activates prior knowledge, generative learning builds mental models, and metacognitive monitoring strengthens awareness of understanding gaps. This enhances long-term retention and transfer of knowledge.';
       default:
         return 'Enhance your cognitive abilities in this domain.';
     }
@@ -582,6 +587,20 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => ConsequenceEngineScreen(
+              activity: activity,
+              module: widget.module,
+              onComplete: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        );
+        break;
+      case ActivityType.conceptCartographer:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ConceptCartographerScreen(
               activity: activity,
               module: widget.module,
               onComplete: () {

@@ -50,6 +50,8 @@ class _ModulesHubScreenState extends State<ModulesHubScreen> {
         return Color(0xFFFFD43B);
       case ModuleType.creativity:
         return Color(0xFF63E6BE);
+      case ModuleType.aiLaboratory:
+        return Color(0xFFA78BFA);
     }
   }
 
@@ -61,6 +63,8 @@ class _ModulesHubScreenState extends State<ModulesHubScreen> {
         return 'memory';
       case ModuleType.creativity:
         return 'creativity';
+      case ModuleType.aiLaboratory:
+        return 'aiLaboratory';
     }
   }
 

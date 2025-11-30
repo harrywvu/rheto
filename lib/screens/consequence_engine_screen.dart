@@ -219,6 +219,8 @@ class _ConsequenceEngineScreenState extends State<ConsequenceEngineScreen> {
         return 'memory';
       case ModuleType.creativity:
         return 'creativity';
+      case ModuleType.aiLaboratory:
+        return 'aiLaboratory';
     }
   }
 

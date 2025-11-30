@@ -4,10 +4,12 @@ import 'package:rheto/screens/assessment_screen.dart';
 import 'package:rheto/screens/home_screen.dart';
 import 'package:rheto/services/score_storage_service.dart';
 import 'package:rheto/services/scoring_service.dart';
+import 'package:rheto/services/notification_service.dart';
 
-// Entry Point of Program
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   ScoringService.setBaseUrl('http://192.168.100.208:3000');
+  await NotificationService().initialize();
   runApp(const MyApp());
 }
 

@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:math';
 
 class ScoreStorageService {
   static const String _ctMetricsKey = 'critical_thinking_metrics';
@@ -45,15 +46,66 @@ class ScoreStorageService {
   static Future<Map<String, double>> getScores() async {
     final metrics = await getMetrics();
 
-    double _calculateAverage(Map<String, double> metricMap) {
-      if (metricMap.isEmpty) return 0.0;
-      return metricMap.values.reduce((a, b) => a + b) / metricMap.length;
+    // Critical Thinking: Weighted formula
+    double _calculateCriticalThinking(Map<String, double> ctMetrics) {
+      if (ctMetrics.isEmpty) return 0.0;
+      final accuracy = ctMetrics['Accuracy'] ?? 0.0;
+      final biasDetection = ctMetrics['Bias Detection'] ?? 0.0;
+      final reflection = ctMetrics['Cognitive Reflection'] ?? 0.0;
+      final justification = ctMetrics['Justification Quality'] ?? 0.0;
+
+      return (accuracy * 0.40) +
+          (biasDetection * 0.20) +
+          (reflection * 0.20) +
+          (justification * 0.20);
+    }
+
+    // Memory: Multiplicative formula
+    double _calculateMemory(Map<String, double> memMetrics) {
+      if (memMetrics.isEmpty) return 0.0;
+      final recallAccuracy = memMetrics['Recall Accuracy'] ?? 0.0;
+      final recallLatency =
+          memMetrics['Recall Latency'] ?? 1.0; // Avoid division by zero
+      final retentionCurve = memMetrics['Retention Curve'] ?? 0.0;
+      final itemMastery = memMetrics['Item Mastery'] ?? 0.0;
+
+      // Normalize metrics from 0-100 to 0-1 scale for multiplication
+      final normAccuracy = recallAccuracy / 100;
+      final normLatency = recallLatency / 100;
+      final normRetention = retentionCurve / 100;
+      final normMastery = itemMastery / 100;
+
+      // Formula: Recall Accuracy x Retention Curve x (1 / sqrt(Recall Latency)) x Item Mastery
+      // Then scale back to 0-100
+      final result =
+          (normAccuracy *
+              normRetention *
+              (1 / sqrt(normLatency + 0.01)) *
+              normMastery) *
+          100;
+      return result.clamp(0, 100);
+    }
+
+    // Creativity: Weighted formula
+    double _calculateCreativity(Map<String, double> crMetrics) {
+      if (crMetrics.isEmpty) return 0.0;
+      final fluency = crMetrics['Fluency'] ?? 0.0;
+      final flexibility = crMetrics['Flexibility'] ?? 0.0;
+      final originality = crMetrics['Originality'] ?? 0.0;
+      final refinement = crMetrics['Refinement Gain'] ?? 0.0;
+
+      return (fluency * 0.30) +
+          (flexibility * 0.25) +
+          (originality * 0.25) +
+          (refinement * 0.20);
     }
 
     return {
-      'criticalThinking': _calculateAverage(metrics['criticalThinking']!),
-      'memory': _calculateAverage(metrics['memory']!),
-      'creativity': _calculateAverage(metrics['creativity']!),
+      'criticalThinking': _calculateCriticalThinking(
+        metrics['criticalThinking']!,
+      ),
+      'memory': _calculateMemory(metrics['memory']!),
+      'creativity': _calculateCreativity(metrics['creativity']!),
     };
   }
 

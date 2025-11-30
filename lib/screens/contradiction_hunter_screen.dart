@@ -425,6 +425,8 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
         return 'memory';
       case ModuleType.creativity:
         return 'creativity';
+      case ModuleType.aiLaboratory:
+        return 'aiLaboratory';
     }
   }
 

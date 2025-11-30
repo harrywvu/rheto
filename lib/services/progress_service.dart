@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:rheto/models/module.dart';
 import 'package:rheto/services/score_storage_service.dart';
+import 'package:rheto/services/notification_service.dart';
 
 class ProgressService {
   static const String _progressKey = 'user_progress';
@@ -89,6 +90,8 @@ class ProgressService {
       moduleType: moduleType,
       activityMetrics: metrics,
     );
+
+    await NotificationService().showContextualNotification();
 
     return updatedProgress;
   }

@@ -394,11 +394,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                         SizedBox(width: 12),
                         Expanded(
-                          child: _buildModuleContainer(
-                            context,
-                            title: 'AI Laboratory',
-                            icon: FontAwesomeIcons.flask,
-                            borderColor: Color(0xFFA78BFA),
+                          child: GestureDetector(
+                            onTap: () =>
+                                _navigateToModule(ModuleType.aiLaboratory),
+                            child: _buildModuleContainer(
+                              context,
+                              title: 'AI Laboratory',
+                              icon: FontAwesomeIcons.flask,
+                              borderColor: Color(0xFFA78BFA),
+                            ),
                           ),
                         ),
                       ],
@@ -419,6 +423,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       Module.criticalThinking(),
       Module.memory(),
       Module.creativity(),
+      Module.aiLaboratory(),
     ];
 
     final module = modules.firstWhere((m) => m.type == moduleType);

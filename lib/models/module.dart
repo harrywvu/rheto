@@ -1,4 +1,4 @@
-enum ModuleType { criticalThinking, memory, creativity }
+enum ModuleType { criticalThinking, memory, creativity, aiLaboratory }
 
 enum ActivityType {
   memoryRecall,
@@ -10,6 +10,7 @@ enum ActivityType {
   refinement,
   contradictionHunter,
   consequenceEngine,
+  conceptCartographer,
 }
 
 class Module {
@@ -137,6 +138,27 @@ class Module {
           difficulty: 'Medium',
           estimatedTime: 7,
           baseReward: 65,
+        ),
+      ],
+    );
+  }
+
+  factory Module.aiLaboratory() {
+    return Module(
+      type: ModuleType.aiLaboratory,
+      name: 'AI Laboratory',
+      description: 'Explore advanced learning through AI-powered activities',
+      icon: 'flask',
+      activities: [
+        Activity(
+          id: 'ai_concept_cartographer',
+          type: ActivityType.conceptCartographer,
+          name: 'Concept Cartographer',
+          description:
+              'Build knowledge maps by assembling concept pieces, drawing connections, and teaching back\n\nMetrics: Conceptual Understanding, Connection Quality, Metacognitive Awareness',
+          difficulty: 'Medium',
+          estimatedTime: 12,
+          baseReward: 0,
         ),
       ],
     );
