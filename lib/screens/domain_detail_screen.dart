@@ -277,9 +277,11 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
     BuildContext context,
     Map<String, double> metrics,
   ) {
-    // Filter out old "Refinement" metric for creativity
+    // Filter out old metrics
     final displayMetrics = widget.domain == 'creativity'
         ? Map.fromEntries(metrics.entries.where((e) => e.key != 'Refinement'))
+        : widget.domain == 'critical_thinking'
+        ? Map.fromEntries(metrics.entries.where((e) => e.key != 'Reflection'))
         : metrics;
 
     return Column(
@@ -303,9 +305,11 @@ class _DomainDetailScreenState extends State<DomainDetailScreen> {
   }
 
   Widget _buildMetricsGrid(BuildContext context, Map<String, double> metrics) {
-    // Filter out old "Refinement" metric for creativity (keep only the 4 new metrics)
+    // Filter out old metrics
     final filteredMetrics = widget.domain == 'creativity'
         ? Map.fromEntries(metrics.entries.where((e) => e.key != 'Refinement'))
+        : widget.domain == 'critical_thinking'
+        ? Map.fromEntries(metrics.entries.where((e) => e.key != 'Reflection'))
         : metrics;
 
     return GridView.count(

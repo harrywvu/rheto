@@ -317,7 +317,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
               .clamp(0, 100)
               .toDouble(),
           'Bias Detection': (depth * 10).clamp(0, 100).toDouble(),
-          'Reflection': simpleScore,
+          'Cognitive Reflection': simpleScore,
           'Justification Quality': (clarity * 10).clamp(0, 100).toDouble(),
         };
 
@@ -330,7 +330,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         criticalThinkingMetrics = {
           'Accuracy': simpleScore,
           'Bias Detection': simpleScore,
-          'Reflection': simpleScore,
+          'Cognitive Reflection': simpleScore,
           'Justification Quality': simpleScore,
         };
       }
@@ -339,7 +339,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       criticalThinkingMetrics = {
         'Accuracy': simpleScore,
         'Bias Detection': simpleScore,
-        'Reflection': simpleScore,
+        'Cognitive Reflection': simpleScore,
         'Justification Quality': simpleScore,
       };
     }
