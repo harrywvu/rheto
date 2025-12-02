@@ -171,7 +171,10 @@ class _ActivityResultsDialogState extends State<ActivityResultsDialog> {
       actions.add(
         TextButton(
           onPressed: widget.onReview,
-          child: const Text('Review', style: TextStyle(color: Colors.white)),
+          child: const Text(
+            'Review',
+            style: TextStyle(color: Colors.white, fontFamily: 'Lettera'),
+          ),
         ),
       );
     }
@@ -183,7 +186,10 @@ class _ActivityResultsDialogState extends State<ActivityResultsDialog> {
     actions.add(
       TextButton(
         onPressed: widget.onContinue,
-        child: const Text('Continue', style: TextStyle(color: Colors.white)),
+        child: const Text(
+          'Continue',
+          style: TextStyle(color: Colors.white, fontFamily: 'Lettera'),
+        ),
       ),
     );
 

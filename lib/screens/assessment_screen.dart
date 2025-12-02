@@ -69,7 +69,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     color: Color(0xFF74C0FC),
                     size: 20,
                   ),
-                  label: Text("Critical Thinking"),
+                  label: Text(
+                    "Critical Thinking",
+                    style: const TextStyle(fontFamily: 'Lettera'),
+                  ),
                   shape: Theme.of(context).chipTheme!.shape?.copyWith(
                     side: BorderSide(color: Color(0xFF74C0FC)),
                   ),
@@ -81,7 +84,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     color: Color(0xFFFFD43B),
                     size: 20,
                   ),
-                  label: Text("Memory"),
+                  label: Text(
+                    "Memory",
+                    style: const TextStyle(fontFamily: 'Lettera'),
+                  ),
                   shape: Theme.of(context).chipTheme!.shape?.copyWith(
                     side: BorderSide(color: Color(0xFFFFD43B)),
                   ),
@@ -93,7 +99,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     color: Color(0xFF63E6BE),
                     size: 20,
                   ),
-                  label: Text("Creativity"),
+                  label: Text(
+                    "Creativity",
+                    style: const TextStyle(fontFamily: 'Lettera'),
+                  ),
                   shape: Theme.of(context).chipTheme!.shape?.copyWith(
                     side: BorderSide(color: Color(0xFF63E6BE)),
                   ),
@@ -108,10 +117,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                   currentStep++;
                 });
               },
-              child: Text("Start"),
+              child: Text(
+                "Start",
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineSmall?.copyWith(fontFamily: 'Ntype82-R'),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF008000),
-                textStyle: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
 
@@ -176,7 +189,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           },
         );
       default:
-        return Center(child: Text("The fuck are you doing here?"));
+        return Center(
+          child: Text(
+            "The fuck are you doing here?",
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
+          ),
+        );
     }
   }
 
@@ -226,9 +246,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       setState(() {
         isScoring = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error scoring assessment: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error scoring assessment: $e',
+            style: const TextStyle(fontFamily: 'Lettera'),
+          ),
+        ),
+      );
     }
   }
 

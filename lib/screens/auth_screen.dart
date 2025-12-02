@@ -42,9 +42,14 @@ class _AuthScreenState extends State<AuthScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to continue: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to continue: $e',
+            style: const TextStyle(fontFamily: 'Lettera'),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -80,11 +85,15 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 Text(
                   'AI-Powered Neuroscience-Based Training App',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
                 ),
                 Text(
                   'for Enhancing Critical Thinking, Memory, and Creativity.',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontFamily: 'Lettera'),
                 ),
               ],
             ),
@@ -106,19 +115,24 @@ class _AuthScreenState extends State<AuthScreen> {
                         )
                       : Text(
                           'Get Started',
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontFamily: 'Ntype82-R'),
                         ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   'Take initial assessment before beginning',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontFamily: 'Lettera'),
                 ),
               ],
             ),
             Text(
               'Welcome to Rheto',
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
             ),
           ],
         ),

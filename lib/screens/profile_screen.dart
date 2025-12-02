@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:rheto/widgets/analytics_dashboard.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -148,17 +149,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             SizedBox(height: 32),
 
-            // Placeholder content
+            // Analytics Dashboard
             Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  'Profile details coming soon...',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Lettera',
-                    color: Colors.grey[500],
-                  ),
-                ),
-              ),
+              child: SingleChildScrollView(child: const AnalyticsDashboard()),
             ),
           ],
         ),
