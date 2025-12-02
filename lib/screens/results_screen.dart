@@ -178,6 +178,9 @@ class ResultsScreen extends StatelessWidget {
                     creativityMetrics: finalCreMetrics,
                   );
 
+                  // Note: Metric snapshots are automatically uploaded to Supabase
+                  // at midnight via background service (BackgroundMetricService)
+
                   // Navigate to home screen
                   if (context.mounted) {
                     Navigator.of(context).pushAndRemoveUntil(

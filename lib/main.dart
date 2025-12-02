@@ -5,11 +5,24 @@ import 'package:rheto/screens/home_screen.dart';
 import 'package:rheto/services/score_storage_service.dart';
 import 'package:rheto/services/scoring_service.dart';
 import 'package:rheto/services/notification_service.dart';
+import 'package:rheto/services/background_metric_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ScoringService.setBaseUrl('http://192.168.100.208:3000');
   await NotificationService().initialize();
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'https://jrtxcoyxswegciqmjniw.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpydHhjb3l4c3dlZ2NpcW1qbml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzODcyNjYsImV4cCI6MjA3OTk2MzI2Nn0.oh-o0b3yau98v18PUe_UiX4M7Lg22Kpmzz7a2yxA6WQ',
+  );
+
+  // Initialize background service for daily metric snapshots
+  await BackgroundMetricService.initializeBackgroundService();
+
   runApp(const MyApp());
 }
 
