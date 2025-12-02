@@ -19,21 +19,21 @@ enum CreativityPhase { initial, twist, refinement }
 class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
   // Phase management
   CreativityPhase _phase = CreativityPhase.initial;
-  
+
   // Timer management
   Timer? _timer;
   int _secondsRemaining = 90;
-  
+
   // Text input
   final TextEditingController _textController = TextEditingController();
   final TextEditingController _refinementController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final FocusNode _refinementFocusNode = FocusNode();
-  
+
   // Ideas tracking
   final List<String> _userIdeas = [];
   String _refinedIdea = '';
-  
+
   // Constants
   static const int _twistDuration = 30;
   static const int _refinementDuration = 45;
@@ -114,7 +114,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
       );
       return;
     }
-    
+
     _timer?.cancel();
     setState(() {
       _phase = CreativityPhase.twist;
@@ -133,7 +133,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
       );
       return;
     }
-    
+
     _timer?.cancel();
     setState(() {
       _phase = CreativityPhase.refinement;
@@ -146,9 +146,6 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
   }
 
   void _onComplete() {
-    print("User Ideas: ${_userIdeas.join(", ")}");
-    print("Refined Idea: $_refinedIdea");
-    
     // Pass data back to parent
     if (widget.onDataCollected != null) {
       widget.onDataCollected!({
@@ -156,7 +153,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
         'refinedIdea': _refinedIdea,
       });
     }
-    
+
     widget.onComplete();
   }
 
@@ -263,7 +260,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
 
   Widget _buildRefinementPhase() {
     final firstIdea = _userIdeas.isNotEmpty ? _userIdeas.first : "No ideas yet";
-    
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -330,14 +327,17 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
   Widget _buildTimer() {
     final minutes = _secondsRemaining ~/ 60;
     final seconds = _secondsRemaining % 60;
-    final timeString = '${minutes.toString().padLeft(1, '0')}:${seconds.toString().padLeft(2, '0')}';
-    
+    final timeString =
+        '${minutes.toString().padLeft(1, '0')}:${seconds.toString().padLeft(2, '0')}';
+
     return Align(
       alignment: Alignment.centerRight,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _secondsRemaining <= 10 ? Colors.red.withOpacity(0.2) : Colors.grey.withOpacity(0.2),
+          color: _secondsRemaining <= 10
+              ? Colors.red.withOpacity(0.2)
+              : Colors.grey.withOpacity(0.2),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -372,9 +372,9 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
           borderSide: BorderSide(color: Color(0xFF74C0FC), width: 2),
         ),
       ),
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        fontFamily: 'Lettera',
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
     );
   }
 
@@ -390,7 +390,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
           'Your ideas will appear here...',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontFamily: 'Lettera',
-            color: Colors.grey, 
+            color: Colors.grey,
             fontStyle: FontStyle.italic,
           ),
           textAlign: TextAlign.center,
@@ -424,16 +424,16 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
                 children: [
                   Text(
                     '• ',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontFamily: 'Lettera',
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
                   ),
                   Expanded(
                     child: Text(
                       entry.value,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontFamily: 'Lettera',
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
                     ),
                   ),
                 ],
@@ -497,9 +497,9 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
           const SizedBox(height: 8),
           Text(
             _refinedIdea,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Lettera',
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontFamily: 'Lettera'),
           ),
         ],
       ),

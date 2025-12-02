@@ -137,7 +137,6 @@ class _ConsequenceEngineScreenState extends State<ConsequenceEngineScreen> {
         );
       }
     } catch (e) {
-      print('Error submitting chain: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -204,7 +203,6 @@ class _ConsequenceEngineScreenState extends State<ConsequenceEngineScreen> {
 
       _showCompletionDialog(progress);
     } catch (e) {
-      print('Error recording activity: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));

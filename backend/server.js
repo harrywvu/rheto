@@ -84,7 +84,6 @@ app.post('/score-justification', async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Error scoring justification:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -130,7 +129,6 @@ app.post('/score-creativity', async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Error scoring creativity:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -170,7 +168,6 @@ app.post('/score-memory', async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Error scoring memory:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -255,7 +252,6 @@ Respond with JSON: {"story": "...", "contradictions": [{"type": "temporal/causal
       expectedContradictionCount: contradictionCount,
     });
   } catch (error) {
-    console.error('Error generating contradiction story:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -342,7 +338,6 @@ Respond ONLY with JSON: {"accuracy_rate": X, "bias_detection_rate": X, "cognitiv
       total: total,
     });
   } catch (error) {
-    console.error('Error scoring contradictions:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -366,7 +361,6 @@ Return ONLY the premise as a single sentence, no quotes, no explanation.`;
 
     let chatCompletion;
     try {
-      // Try with :cheapest first
       chatCompletion = await client.chatCompletion({
         model: 'openai/gpt-oss-20b:cheapest',
         messages: [
@@ -381,8 +375,6 @@ Return ONLY the premise as a single sentence, no quotes, no explanation.`;
         ],
       });
     } catch (fallbackError) {
-      // Fallback to base model without :cheapest
-      console.warn('Falling back to base model without :cheapest', fallbackError.message);
       chatCompletion = await client.chatCompletion({
         model: 'openai/gpt-oss-20b',
         messages: [
@@ -402,7 +394,6 @@ Return ONLY the premise as a single sentence, no quotes, no explanation.`;
 
     res.json({ premise });
   } catch (error) {
-    console.error('Error generating premise:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -485,7 +476,6 @@ Respond ONLY with JSON: {"fluency": X, "flexibility": X, "originality": X, "refi
       total: total,
     });
   } catch (error) {
-    console.error('Error scoring consequences:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -560,7 +550,6 @@ app.post('/get-concept-topic', async (req, res) => {
 
     res.json(selectedTopic);
   } catch (error) {
-    console.error('Error getting topic:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -620,12 +609,8 @@ Make concepts diverse, covering different aspects of ${topic}. Return ONLY the J
 
     const responseText = chatCompletion.choices[0].message.content;
     
-    console.log('AI Response:', responseText);
-    
-    // Extract JSON from response (in case there's extra text)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('No JSON found in response:', responseText);
       throw new Error('Invalid JSON response from AI - no JSON object found');
     }
 
@@ -633,32 +618,24 @@ Make concepts diverse, covering different aspects of ${topic}. Return ONLY the J
     try {
       conceptData = JSON.parse(jsonMatch[0]);
     } catch (parseError) {
-      console.error('JSON Parse error:', parseError, 'Text:', jsonMatch[0]);
       throw new Error('Failed to parse AI response as JSON');
     }
 
     // Validate the response has required fields
     if (!conceptData.pieces || !Array.isArray(conceptData.pieces)) {
-      console.error('Missing pieces array:', conceptData);
       throw new Error('Invalid concept data structure - missing pieces array');
     }
 
     if (conceptData.pieces.length !== 5) {
-      console.error('Wrong number of pieces:', conceptData.pieces.length);
       throw new Error(`Expected 5 concept pieces, got ${conceptData.pieces.length}`);
     }
 
     if (!conceptData.connections || !Array.isArray(conceptData.connections)) {
-      console.error('Missing connections array:', conceptData);
       throw new Error('Invalid concept data structure - missing connections array');
     }
 
     res.json(conceptData);
   } catch (error) {
-    console.error('Error generating custom topic:', error);
-    
-    // Fallback: Generate a basic concept map structure
-    console.log('Using fallback concept map for topic:', topic);
     const fallbackData = {
       topic: topic,
       description: `Understanding the key aspects and relationships of ${topic}`,
@@ -693,7 +670,6 @@ app.post('/generate-concept-topic', async (req, res) => {
 
     res.json(selectedTopic);
   } catch (error) {
-    console.error('Error generating topic:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -739,7 +715,6 @@ Be encouraging and constructive. Focus on what they got right first.`;
       gaps: Math.min(gaps, 5),
     });
   } catch (error) {
-    console.error('Error assessing prior knowledge:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -789,7 +764,6 @@ Be specific and reference their concept map connections.`;
       reasoning_quality: Math.min(Math.max(Math.random() * 10, 3), 9),
     });
   } catch (error) {
-    console.error('Error evaluating prediction:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -873,13 +847,12 @@ Respond ONLY with JSON: {"clarity": X, "depth": X, "completeness": X, "growth": 
       overall: overallScore,
     });
   } catch (error) {
-    console.error('Error scoring teach-back:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Rheto Scoring API running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 

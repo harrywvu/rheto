@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:rheto/AppTheme.dart';
 import 'package:rheto/screens/assessment_screen.dart';
 import 'package:rheto/screens/auth_screen.dart';
@@ -12,17 +13,21 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  ScoringService.setBaseUrl('http://192.168.100.208:3000');
+
+  await dotenv.load();
+
+  final backendUrl = dotenv.env['BACKEND_URL'] ?? 'http://localhost:3000';
+  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
+  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+
+  ScoringService.setBaseUrl(backendUrl);
   await NotificationService().initialize();
 
-  // Initialize Supabase
   await supabase.Supabase.initialize(
-    url: 'https://jrtxcoyxswegciqmjniw.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpydHhjb3l4c3dlZ2NpcW1qbml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzODcyNjYsImV4cCI6MjA3OTk2MzI2Nn0.oh-o0b3yau98v18PUe_UiX4M7Lg22Kpmzz7a2yxA6WQ',
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
 
-  // Initialize background service for daily metric snapshots
   await BackgroundMetricService.initializeBackgroundService();
 
   runApp(const MyApp());

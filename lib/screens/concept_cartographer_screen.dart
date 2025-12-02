@@ -183,7 +183,6 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
           });
         } catch (parseError) {
           setState(() => isLoadingTopic = false);
-          print('Parse error: $parseError');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error parsing response: $parseError')),
           );
@@ -311,7 +310,6 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
         );
       }
     } catch (e) {
-      print('Error: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -383,9 +381,7 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
           currentPhase = ConceptPhase.teachBack;
         });
       }
-    } catch (e) {
-      print('Error: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> _submitTeachBack() async {
@@ -417,7 +413,6 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
         _calculateFinalScores(scores);
       }
     } catch (e) {
-      print('Error: $e');
       _calculateFinalScores({});
     }
   }

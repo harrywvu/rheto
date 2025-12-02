@@ -57,10 +57,6 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
 
   Future<void> _loadStoryFromAPI() async {
     try {
-      print(
-        'Loading contradiction story from: ${ScoringService.baseUrl}/generate-contradiction-story',
-      );
-
       final difficulty = _getDifficultyLevel(widget.activity.difficulty);
 
       final response = await http
@@ -71,12 +67,8 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
           )
           .timeout(const Duration(seconds: 120));
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('Parsed data: $data');
 
         setState(() {
           story = data['story'] as String;
@@ -94,20 +86,13 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
           // Identify which sentences contain contradictions
           _identifyCorrectSentenceIndices();
         });
-        print(
-          'Successfully loaded story with $expectedContradictionCount contradictions',
-        );
 
         // Start timer for story reading
         _startStoryTimer();
       } else {
-        print('API returned status ${response.statusCode}, using default');
         _setDefaultStory();
       }
     } catch (e) {
-      print('❌ ERROR loading story: $e');
-      print('Stack trace: ${StackTrace.current}');
-      print('⚠️ FALLING BACK TO DEFAULT STORY');
       _setDefaultStory();
     }
   }
@@ -161,8 +146,6 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
         }
       }
     }
-
-    print('Identified correct sentence indices: $correctSentenceIndices');
   }
 
   bool _sentenceRelatedToContradiction(
@@ -257,25 +240,8 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
           )
           .timeout(const Duration(seconds: 30));
 
-      print('Scoring response status: ${response.statusCode}');
-      print('Scoring response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final scores = jsonDecode(response.body);
-
-        print('✅ Parsed scores: $scores');
-        print(
-          '   - accuracy_rate: ${scores['accuracy_rate']} (type: ${scores['accuracy_rate'].runtimeType})',
-        );
-        print(
-          '   - bias_detection_rate: ${scores['bias_detection_rate']} (type: ${scores['bias_detection_rate'].runtimeType})',
-        );
-        print(
-          '   - cognitive_reflection: ${scores['cognitive_reflection']} (type: ${scores['cognitive_reflection'].runtimeType})',
-        );
-        print(
-          '   - justification_quality: ${scores['justification_quality']} (type: ${scores['justification_quality'].runtimeType})',
-        );
 
         final totalScore = (scores['total'] as num).toDouble();
 
@@ -290,20 +256,11 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
           'justification': justificationController.text,
         };
 
-        print('📊 Metrics being saved: $metricsToSave');
-
         final progress = await ProgressService.completeActivity(
           activityId: widget.activity.id,
           score: totalScore.clamp(0, 100),
           moduleType: _getModuleTypeKey(widget.module.type),
           metrics: metricsToSave,
-        );
-
-        print(
-          '✅ Activity saved. Progress: coins=${progress.totalCoins}, streak=${progress.currentStreak}',
-        );
-        print(
-          '   Last activity metrics: ${progress.completedActivities.last.metrics}',
         );
 
         if (mounted) {
@@ -313,7 +270,6 @@ class _ContradictionHunterScreenState extends State<ContradictionHunterScreen> {
         throw Exception('Failed to score contradictions');
       }
     } catch (e) {
-      print('Error submitting activity: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error submitting activity: $e')),

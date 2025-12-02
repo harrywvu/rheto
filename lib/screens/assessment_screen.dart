@@ -163,13 +163,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         return QuizScreenCreativity(
           onComplete: () async {
             // Trigger scoring after creativity quiz
-            // creativityData is already set by onDataCollected callback
-            print('About to score. Creativity data: $creativityData');
             await _performScoring();
           },
           onDataCollected: (data) {
             creativityData = data;
-            print('Creativity data collected: $creativityData');
           },
         );
       case 4:
@@ -242,7 +239,6 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         isScoring = false;
       });
     } catch (e) {
-      print('Error during scoring: $e');
       setState(() {
         isScoring = false;
       });
@@ -350,7 +346,6 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         // Weight: 80% simple score, 20% justification
         simpleScore = (simpleScore * 0.8) + (justificationScore * 0.2);
       } catch (e) {
-        print('Error scoring justification: $e');
         // Fallback: use simple score for all metrics
         criticalThinkingMetrics = {
           'Accuracy': simpleScore,
@@ -382,14 +377,6 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         memoryData['averageRecallTime'] ??
         10.0; // High recall time = lower score
 
-    // Debug logging for memory scoring
-    print("ASSESSMENT MEMORY SCORING:");
-    print("Memory Data: $memoryData");
-    print("Immediate Recall Accuracy: $immediateRecallAccuracy");
-    print("Retention Curve: $retentionCurve");
-    print("Average Recall Time: $averageRecallTime");
-    print("Keys in memoryData: ${memoryData.keys.toList()}");
-
     try {
       final scores = await ScoringService.scoreMemory(
         immediateRecallAccuracy: immediateRecallAccuracy,
@@ -413,7 +400,6 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
       return (scores['total'] ?? 0.0).toDouble();
     } catch (e) {
-      print('Error scoring memory: $e');
       // Calculate score locally if API fails
       if (immediateRecallAccuracy <= 0) {
         memoryMetrics = {
@@ -460,13 +446,6 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       final originality = (scores['originality'] as num? ?? 0).toDouble();
       final refinement = (scores['refinement_gain'] as num? ?? 0).toDouble();
 
-      // Debug logging
-      print('CREATIVITY SCORING DEBUG:');
-      print('Raw scores: $scores');
-      print(
-        'Fluency: $fluency, Flexibility: $flexibility, Originality: $originality, Refinement: $refinement',
-      );
-
       // Store metrics (convert from 0-10 scale to 0-100)
       creativityMetrics = {
         'Fluency': (fluency * 10).clamp(0, 100).toDouble(),
@@ -474,13 +453,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         'Originality': (originality * 10).clamp(0, 100).toDouble(),
         'Refinement Gain': (refinement * 10).clamp(0, 100).toDouble(),
       };
-      print('Creativity metrics: $creativityMetrics');
-      print('Total score: ${scores['total']}');
 
       return (scores['total'] ?? 0.0).toDouble();
     } catch (e) {
-      print('Error scoring creativity: $e');
-
       // Calculate a basic score based on number of ideas and refinement
       final ideasScore = ideas.isEmpty
           ? 0.0

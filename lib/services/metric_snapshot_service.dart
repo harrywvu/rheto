@@ -31,7 +31,6 @@ class MetricSnapshotService {
     try {
       // Check if already uploaded today
       if (await hasUploadedToday()) {
-        print('Metrics already uploaded today');
         return true;
       }
 
@@ -81,10 +80,8 @@ class MetricSnapshotService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_lastSnapshotDateKey, now.toIso8601String());
 
-      print('Successfully uploaded ${snapshots.length} metric snapshots');
       return true;
     } catch (e) {
-      print('Error uploading metric snapshots: $e');
       return false;
     }
   }
@@ -114,7 +111,6 @@ class MetricSnapshotService {
       final response = await query.order('captured_at', ascending: false);
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      print('Error fetching metric snapshots: $e');
       return [];
     }
   }
@@ -146,7 +142,6 @@ class MetricSnapshotService {
       final response = await query.order('captured_at', ascending: false);
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      print('Error fetching domain snapshots: $e');
       return [];
     }
   }

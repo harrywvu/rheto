@@ -209,7 +209,6 @@ class _SequenceMemoryScreenState extends State<SequenceMemoryScreen> {
         _showCompletionDialog(totalScore, progress, correctCount);
       }
     } catch (e) {
-      print('Error submitting activity: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error submitting activity: $e')),

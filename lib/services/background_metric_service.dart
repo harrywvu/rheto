@@ -92,9 +92,7 @@ class BackgroundMetricService {
 
       // It's midnight! Upload metrics
       await _uploadMetricsNow(prefs);
-    } catch (e) {
-      print('Error in background metric check: $e');
-    }
+    } catch (e) {}
   }
 
   /// Upload metrics to Supabase
@@ -108,7 +106,6 @@ class BackgroundMetricService {
       if (ctMetricsJson == null ||
           memMetricsJson == null ||
           crMetricsJson == null) {
-        print('No metrics to upload');
         return;
       }
 
@@ -124,7 +121,6 @@ class BackgroundMetricService {
       // Get user ID from storage
       final userId = prefs.getString(_userIdKey);
       if (userId == null || userId.isEmpty) {
-        print('No user ID found, skipping upload');
         return;
       }
 
@@ -167,13 +163,7 @@ class BackgroundMetricService {
 
       // Mark as uploaded
       await prefs.setString(_lastBackgroundUploadKey, now.toIso8601String());
-
-      print(
-        'Background: Successfully uploaded ${snapshots.length} metric snapshots at midnight',
-      );
-    } catch (e) {
-      print('Error uploading metrics in background: $e');
-    }
+    } catch (e) {}
   }
 
   /// Parse metrics from JSON string
@@ -182,7 +172,6 @@ class BackgroundMetricService {
       final decoded = (jsonDecode(json) as Map).cast<String, dynamic>();
       return decoded.map((k, v) => MapEntry(k, (v as num).toDouble()));
     } catch (e) {
-      print('Error parsing metrics: $e');
       return {};
     }
   }
