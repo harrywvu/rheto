@@ -7,6 +7,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class BackgroundMetricService {
   static const String _lastBackgroundUploadKey =
       'last_background_metric_upload';
+  static const String _userIdKey = 'current_user_id';
+
+  /// Save the current user ID for background uploads
+  static Future<void> saveUserId(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userIdKey, userId);
+  }
 
   /// Initialize background service for daily midnight uploads
   static Future<void> initializeBackgroundService() async {
@@ -114,10 +121,17 @@ class BackgroundMetricService {
       final snapshots = <Map<String, dynamic>>[];
       final now = DateTime.now();
 
+      // Get user ID from storage
+      final userId = prefs.getString(_userIdKey);
+      if (userId == null || userId.isEmpty) {
+        print('No user ID found, skipping upload');
+        return;
+      }
+
       // Critical Thinking
       ctMetrics.forEach((name, value) {
         snapshots.add({
-          'user_id': 'placeholder-user-id', // TODO: Replace with auth user ID
+          'user_id': userId,
           'domain': 'critical_thinking',
           'metric_name': name,
           'value': value,
@@ -128,7 +142,7 @@ class BackgroundMetricService {
       // Memory
       memMetrics.forEach((name, value) {
         snapshots.add({
-          'user_id': 'placeholder-user-id',
+          'user_id': userId,
           'domain': 'memory',
           'metric_name': name,
           'value': value,
@@ -139,7 +153,7 @@ class BackgroundMetricService {
       // Creativity
       crMetrics.forEach((name, value) {
         snapshots.add({
-          'user_id': 'placeholder-user-id',
+          'user_id': userId,
           'domain': 'creativity',
           'metric_name': name,
           'value': value,
