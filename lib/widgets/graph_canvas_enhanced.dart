@@ -31,6 +31,7 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
   late AnimationController _pulseController;
   final bool _isMobile = Platform.isAndroid || Platform.isIOS;
   GraphNode? _selectedNodeForInfo;
+  GraphNode? _nodeBeingHeld;
 
   // Touch target sizes
   late double _nodeRadius;
@@ -87,7 +88,8 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
           ),
           child: GestureDetector(
             onTapDown: _handleTapDown,
-            onLongPress: _handleLongPress,
+            onLongPressStart: _handleLongPressStart,
+            onLongPressEnd: _handleLongPressEnd,
             onPanStart: _handlePanStart,
             onPanUpdate: _handlePanUpdate,
             onPanEnd: _handlePanEnd,
@@ -218,10 +220,17 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
       final tappedNode = _findNodeAtPosition(tapPos);
 
       if (tappedNode != null) {
-        // Show node info modal instead of selecting
+        // Just select the node on tap, don't show modal yet
         setState(() {
-          _selectedNodeForInfo = tappedNode;
+          _graph.clearSelections();
+          final index = _graph.nodes.indexWhere((n) => n.id == tappedNode.id);
+          if (index != -1) {
+            _graph.nodes[index] = _graph.nodes[index].copyWith(
+              isSelected: true,
+            );
+          }
         });
+        widget.onGraphChanged();
       } else {
         setState(() {
           _graph.clearSelections();
@@ -231,50 +240,24 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
     }
   }
 
-  void _handleLongPress() {
-    if (_isMobile) {
-      final selectedNode = _graph.nodes.firstWhere(
-        (n) => n.isSelected,
-        orElse: () => GraphNode(id: '', x: 0, y: 0, text: ''),
-      );
+  void _handleLongPressStart(LongPressStartDetails details) {
+    final tapPos = details.localPosition;
+    final node = _findNodeAtPosition(tapPos);
 
-      if (selectedNode.id.isNotEmpty) {
-        _showNodeContextMenu(selectedNode);
-      }
+    if (node != null && !_graph.isDrawingEdge) {
+      setState(() {
+        _nodeBeingHeld = node;
+      });
     }
   }
 
-  void _showNodeContextMenu(GraphNode node) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit Label'),
-              onTap: () {
-                Navigator.pop(context);
-                _showEditLabelDialog(node);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                setState(() {
-                  _graph.removeNode(node.id);
-                });
-                widget.onGraphChanged();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+  void _handleLongPressEnd(LongPressEndDetails details) {
+    if (_nodeBeingHeld != null && !_graph.isDrawingEdge) {
+      setState(() {
+        _selectedNodeForInfo = _nodeBeingHeld;
+        _nodeBeingHeld = null;
+      });
+    }
   }
 
   void _showEditLabelDialog(GraphNode node) {
@@ -394,7 +377,7 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white)),
           ),
           TextButton(
             onPressed: () {
@@ -403,7 +386,7 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
                 Navigator.pop(context);
               }
             },
-            child: const Text('Create'),
+            child: const Text('Create', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

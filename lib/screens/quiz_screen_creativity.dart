@@ -449,7 +449,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3BF),
+        color: const Color(0xFFFFD43B).withOpacity(0.15),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFFFD43B), width: 2),
       ),
@@ -461,6 +461,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontFamily: 'Lettera',
               fontWeight: FontWeight.bold,
+              color: const Color(0xFFFFD43B),
             ),
           ),
           const SizedBox(height: 8),
@@ -469,6 +470,7 @@ class _QuizScreenCreativityState extends State<QuizScreenCreativity> {
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontFamily: 'Lettera',
               fontSize: 18,
+              color: Colors.white,
             ),
           ),
         ],

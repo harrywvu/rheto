@@ -4,12 +4,9 @@ import 'package:rheto/AppTheme.dart';
 import 'package:rheto/screens/assessment_screen.dart';
 import 'package:rheto/screens/auth_screen.dart';
 import 'package:rheto/screens/home_screen.dart';
-import 'package:rheto/services/auth_service.dart';
 import 'package:rheto/services/score_storage_service.dart';
 import 'package:rheto/services/scoring_service.dart';
 import 'package:rheto/services/notification_service.dart';
-import 'package:rheto/services/background_metric_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,18 +14,9 @@ void main() async {
   await dotenv.load();
 
   final backendUrl = dotenv.env['BACKEND_URL'] ?? 'http://localhost:3000';
-  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   ScoringService.setBaseUrl(backendUrl);
   await NotificationService().initialize();
-
-  await supabase.Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseAnonKey,
-  );
-
-  await BackgroundMetricService.initializeBackgroundService();
 
   runApp(const MyApp());
 }
@@ -69,21 +57,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<Widget> _getInitialScreen() async {
     try {
-      // Give Supabase a moment to fully initialize
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Check if user has an active session
-      final hasSession = AuthService.hasSession;
-      if (hasSession) {
-        // Session exists, check assessment status
-        final hasCompleted = await ScoreStorageService.hasCompletedAssessment();
-        return hasCompleted ? const HomeScreen() : AssessmentScreen();
+      // Check if user has completed assessment
+      final hasCompleted = await ScoreStorageService.hasCompletedAssessment();
+      if (hasCompleted) {
+        return const HomeScreen();
       } else {
-        // No session, go to auth screen
         return const AuthScreen();
       }
     } catch (e) {
-      // On error, show auth screen
+      // On error, show welcome screen
       return const AuthScreen();
     }
   }

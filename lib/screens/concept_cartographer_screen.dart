@@ -758,7 +758,7 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
                   Container(
                     height: 8,
                     decoration: BoxDecoration(
-                      color: index <= currentIndex
+                      color: index < currentIndex
                           ? Color(0xFF74C0FC)
                           : Colors.grey[700],
                       borderRadius: BorderRadius.circular(4),
@@ -769,7 +769,7 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
                     phases[index],
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontFamily: 'Lettera',
-                      color: index <= currentIndex
+                      color: index < currentIndex
                           ? Color(0xFF74C0FC)
                           : Colors.grey[500],
                       fontSize: 10,

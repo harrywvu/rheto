@@ -1,6 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'dart:math';
 
 class ScoreStorageService {
   static const String _ctMetricsKey = 'critical_thinking_metrics';
@@ -60,30 +59,11 @@ class ScoreStorageService {
           (justification * 0.20);
     }
 
-    // Memory: Multiplicative formula
+    // Memory: Simple weighted average (matches ResultsScreen calculation)
     double _calculateMemory(Map<String, double> memMetrics) {
       if (memMetrics.isEmpty) return 0.0;
-      final recallAccuracy = memMetrics['Recall Accuracy'] ?? 0.0;
-      final recallLatency =
-          memMetrics['Recall Latency'] ?? 1.0; // Avoid division by zero
-      final retentionCurve = memMetrics['Retention Curve'] ?? 0.0;
-      final itemMastery = memMetrics['Item Mastery'] ?? 0.0;
-
-      // Normalize metrics from 0-100 to 0-1 scale for multiplication
-      final normAccuracy = recallAccuracy / 100;
-      final normLatency = recallLatency / 100;
-      final normRetention = retentionCurve / 100;
-      final normMastery = itemMastery / 100;
-
-      // Formula: Recall Accuracy x Retention Curve x (1 / sqrt(Recall Latency)) x Item Mastery
-      // Then scale back to 0-100
-      final result =
-          (normAccuracy *
-              normRetention *
-              (1 / sqrt(normLatency + 0.01)) *
-              normMastery) *
-          100;
-      return result.clamp(0, 100);
+      final sum = memMetrics.values.reduce((a, b) => a + b);
+      return sum / memMetrics.length;
     }
 
     // Creativity: Weighted formula

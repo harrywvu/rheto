@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:rheto/services/metric_snapshot_service.dart';
-import 'package:rheto/services/auth_service.dart';
 import 'dart:math';
 
 class AnalyticsDashboard extends StatefulWidget {
@@ -57,20 +55,9 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    final userId = AuthService.currentUserId;
-    if (userId == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
-
-    final startDate = DateTime.now().subtract(Duration(days: _selectedDays));
-    final snapshots = await MetricSnapshotService.getSnapshotsForUser(
-      userId: userId,
-      startDate: startDate,
-    );
-
+    // All metrics stored locally - no remote snapshots
     setState(() {
-      _snapshots = snapshots;
+      _snapshots = [];
       _isLoading = false;
     });
   }

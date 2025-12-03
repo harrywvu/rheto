@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select profile images.</string>
+	<key>NSPhotoLibraryAddOnlyUsageDescription</key>
+	<string>This app needs access to save images to your photo library.</string>
 </dict>
 </plist>

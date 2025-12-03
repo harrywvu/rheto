@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rheto/services/auth_service.dart';
-import 'package:rheto/services/background_metric_service.dart';
 import 'package:rheto/services/score_storage_service.dart';
 import 'package:rheto/screens/assessment_screen.dart';
 import 'package:rheto/screens/home_screen.dart';
@@ -19,15 +17,6 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await AuthService.signInAnonymously();
-
-      // Save user ID for background service
-      if (response.user != null) {
-        await BackgroundMetricService.saveUserId(response.user!.id);
-      }
-
-      if (!mounted) return;
-
       // Check if user has completed assessment
       final hasCompleted = await ScoreStorageService.hasCompletedAssessment();
 
