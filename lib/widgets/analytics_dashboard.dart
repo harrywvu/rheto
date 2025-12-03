@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:math';
+import 'package:rheto/services/metrics_database.dart';
 
 class AnalyticsDashboard extends StatefulWidget {
   const AnalyticsDashboard({super.key});
@@ -13,7 +13,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
   String _selectedDomain = 'All Domains';
   int _selectedDays = 7;
   bool _isLoading = true;
-  List<Map<String, dynamic>> _snapshots = [];
+  List<DailyMetrics> _dailyMetrics = [];
 
   final List<String> _domains = [
     'All Domains',
@@ -25,10 +25,10 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
   // Colors for each metric
   final Map<String, Color> _metricColors = {
     // Critical Thinking
-    'accuracy': const Color(0xFF74C0FC),
-    'bias_detection': const Color(0xFF63E6BE),
-    'reflection': const Color(0xFFFFD43B),
-    'justification': const Color(0xFFFF922B),
+    'accuracy_rate': const Color(0xFF74C0FC),
+    'bias_detection_rate': const Color(0xFF63E6BE),
+    'cognitive_reflection': const Color(0xFFFFD43B),
+    'justification_quality': const Color(0xFFFF922B),
     // Memory
     'recall_accuracy': const Color(0xFF74C0FC),
     'recall_latency': const Color(0xFF63E6BE),
@@ -38,7 +38,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
     'fluency': const Color(0xFF74C0FC),
     'flexibility': const Color(0xFF63E6BE),
     'originality': const Color(0xFFFFD43B),
-    'refinement': const Color(0xFFFF922B),
+    'refinement_gain': const Color(0xFFFF922B),
     // Domain scores
     'critical_thinking': const Color(0xFF74C0FC),
     'memory': const Color(0xFF63E6BE),
@@ -55,122 +55,54 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    // All metrics stored locally - no remote snapshots
-    setState(() {
-      _snapshots = [];
-      _isLoading = false;
-    });
-  }
+    try {
+      // Load daily aggregates from SQLite database
+      final dailyData = await MetricsDatabase.getDailyAggregates(
+        startTime: DateTime.now().subtract(Duration(days: _selectedDays)),
+        endTime: DateTime.now(),
+      );
 
-  // Group snapshots by day
-  Map<String, Map<String, double>> _groupByDay() {
-    final Map<String, Map<String, double>> grouped = {};
-
-    for (final snapshot in _snapshots) {
-      final date = DateTime.parse(snapshot['captured_at'] as String);
-      final dayKey =
-          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      final metricName = snapshot['metric_name'] as String;
-      final value = (snapshot['value'] as num).toDouble();
-
-      if (!grouped.containsKey(dayKey)) {
-        grouped[dayKey] = {};
-      }
-      grouped[dayKey]![metricName] = value;
+      setState(() {
+        _dailyMetrics = dailyData;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading analytics data: $e');
+      setState(() {
+        _dailyMetrics = [];
+        _isLoading = false;
+      });
     }
-
-    return grouped;
-  }
-
-  // Calculate domain scores for each day
-  Map<String, Map<String, double>> _calculateDomainScores() {
-    final grouped = _groupByDay();
-    final Map<String, Map<String, double>> domainScores = {};
-
-    for (final entry in grouped.entries) {
-      final dayKey = entry.key;
-      final metrics = entry.value;
-
-      domainScores[dayKey] = {};
-
-      // Critical Thinking: (accuracy * 0.40) + (bias_detection * 0.20) + (reflection * 0.20) + (justification * 0.20)
-      final accuracy = metrics['accuracy'] ?? 0;
-      final biasDetection = metrics['bias_detection'] ?? 0;
-      final reflection = metrics['reflection'] ?? 0;
-      final justification = metrics['justification'] ?? 0;
-      domainScores[dayKey]!['critical_thinking'] =
-          (accuracy * 0.40) +
-          (biasDetection * 0.20) +
-          (reflection * 0.20) +
-          (justification * 0.20);
-
-      // Memory: recall_accuracy * retention_curve * (1 / sqrt(recall_latency)) * item_mastery
-      final recallAccuracy = metrics['recall_accuracy'] ?? 0;
-      final recallLatency = metrics['recall_latency'] ?? 1;
-      final retentionCurve = metrics['retention_curve'] ?? 0;
-      final itemMastery = metrics['item_mastery'] ?? 0;
-      final memoryScore = recallLatency > 0
-          ? recallAccuracy *
-                retentionCurve *
-                (1 / sqrt(recallLatency)) *
-                itemMastery
-          : 0.0;
-      domainScores[dayKey]!['memory'] = memoryScore.clamp(0, 10);
-
-      // Creativity: (fluency * 0.30) + (flexibility * 0.25) + (originality * 0.25) + (refinement * 0.20)
-      final fluency = metrics['fluency'] ?? 0;
-      final flexibility = metrics['flexibility'] ?? 0;
-      final originality = metrics['originality'] ?? 0;
-      final refinement = metrics['refinement'] ?? 0;
-      domainScores[dayKey]!['creativity'] =
-          (fluency * 0.30) +
-          (flexibility * 0.25) +
-          (originality * 0.25) +
-          (refinement * 0.20);
-
-      // Overall: Average of the three domain scores
-      final ct = domainScores[dayKey]!['critical_thinking'] ?? 0;
-      final mem = domainScores[dayKey]!['memory'] ?? 0;
-      final cre = domainScores[dayKey]!['creativity'] ?? 0;
-      domainScores[dayKey]!['overall'] = (ct + mem + cre) / 3;
-    }
-
-    return domainScores;
   }
 
   List<LineChartBarData> _buildChartData() {
-    final grouped = _groupByDay();
-    final domainScores = _calculateDomainScores();
-
-    // Sort days chronologically
-    final sortedDays = grouped.keys.toList()..sort();
-
-    if (sortedDays.isEmpty) return [];
+    if (_dailyMetrics.isEmpty) return [];
 
     List<LineChartBarData> lines = [];
 
     if (_selectedDomain == 'All Domains') {
-      // Show overall score line
+      // Show overall score line (average of 3 domain scores)
       final spots = <FlSpot>[];
-      for (int i = 0; i < sortedDays.length; i++) {
-        final day = sortedDays[i];
-        final score = domainScores[day]?['overall'] ?? 0;
-        spots.add(FlSpot(i.toDouble(), score));
+      for (int i = 0; i < _dailyMetrics.length; i++) {
+        final dm = _dailyMetrics[i];
+        final overall =
+            (dm.criticalThinkingScore + dm.memoryScore + dm.creativityScore) /
+            3;
+        spots.add(FlSpot(i.toDouble(), overall));
       }
       lines.add(_createLine(spots, _metricColors['overall']!));
     } else if (_selectedDomain == 'Critical Thinking') {
       // Show individual CT metrics
       final metrics = [
-        'accuracy',
-        'bias_detection',
-        'reflection',
-        'justification',
+        'accuracy_rate',
+        'bias_detection_rate',
+        'cognitive_reflection',
+        'justification_quality',
       ];
       for (final metric in metrics) {
         final spots = <FlSpot>[];
-        for (int i = 0; i < sortedDays.length; i++) {
-          final day = sortedDays[i];
-          final value = grouped[day]?[metric] ?? 0;
+        for (int i = 0; i < _dailyMetrics.length; i++) {
+          final value = _dailyMetrics[i].getMetric(metric);
           spots.add(FlSpot(i.toDouble(), value));
         }
         lines.add(_createLine(spots, _metricColors[metric]!));
@@ -185,21 +117,24 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
       ];
       for (final metric in metrics) {
         final spots = <FlSpot>[];
-        for (int i = 0; i < sortedDays.length; i++) {
-          final day = sortedDays[i];
-          final value = grouped[day]?[metric] ?? 0;
+        for (int i = 0; i < _dailyMetrics.length; i++) {
+          final value = _dailyMetrics[i].getMetric(metric);
           spots.add(FlSpot(i.toDouble(), value));
         }
         lines.add(_createLine(spots, _metricColors[metric]!));
       }
     } else if (_selectedDomain == 'Creativity') {
       // Show individual Creativity metrics
-      final metrics = ['fluency', 'flexibility', 'originality', 'refinement'];
+      final metrics = [
+        'fluency',
+        'flexibility',
+        'originality',
+        'refinement_gain',
+      ];
       for (final metric in metrics) {
         final spots = <FlSpot>[];
-        for (int i = 0; i < sortedDays.length; i++) {
-          final day = sortedDays[i];
-          final value = grouped[day]?[metric] ?? 0;
+        for (int i = 0; i < _dailyMetrics.length; i++) {
+          final value = _dailyMetrics[i].getMetric(metric);
           spots.add(FlSpot(i.toDouble(), value));
         }
         lines.add(_createLine(spots, _metricColors[metric]!));
@@ -210,9 +145,12 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
   }
 
   LineChartBarData _createLine(List<FlSpot> spots, Color color) {
+    // Disable curve for single point or two points to avoid visual glitches
+    final shouldCurve = spots.length > 2;
+
     return LineChartBarData(
       spots: spots,
-      isCurved: true,
+      isCurved: shouldCurve,
       color: color,
       barWidth: 3,
       isStrokeCapRound: true,
@@ -231,10 +169,6 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
     );
   }
 
-  List<String> _getSortedDays() {
-    return _groupByDay().keys.toList()..sort();
-  }
-
   Widget _buildLegend() {
     List<Widget> legendItems = [];
 
@@ -243,15 +177,23 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
         _buildLegendItem('Overall Score', _metricColors['overall']!),
       );
     } else if (_selectedDomain == 'Critical Thinking') {
-      legendItems.add(_buildLegendItem('Accuracy', _metricColors['accuracy']!));
       legendItems.add(
-        _buildLegendItem('Bias Detection', _metricColors['bias_detection']!),
+        _buildLegendItem('Accuracy', _metricColors['accuracy_rate']!),
       );
       legendItems.add(
-        _buildLegendItem('Reflection', _metricColors['reflection']!),
+        _buildLegendItem(
+          'Bias Detection',
+          _metricColors['bias_detection_rate']!,
+        ),
       );
       legendItems.add(
-        _buildLegendItem('Justification', _metricColors['justification']!),
+        _buildLegendItem('Reflection', _metricColors['cognitive_reflection']!),
+      );
+      legendItems.add(
+        _buildLegendItem(
+          'Justification',
+          _metricColors['justification_quality']!,
+        ),
       );
     } else if (_selectedDomain == 'Memory') {
       legendItems.add(
@@ -275,7 +217,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
         _buildLegendItem('Originality', _metricColors['originality']!),
       );
       legendItems.add(
-        _buildLegendItem('Refinement', _metricColors['refinement']!),
+        _buildLegendItem('Refinement', _metricColors['refinement_gain']!),
       );
     }
 
@@ -309,21 +251,12 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final sortedDays = _getSortedDays();
     final chartData = _buildChartData();
+    final dayCount = _dailyMetrics.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
-        Text(
-          'Analytics',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(fontFamily: 'Ntype82-R'),
-        ),
-        const SizedBox(height: 16),
-
         // Domain selector and date range filter
         Row(
           children: [
@@ -419,7 +352,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
           ),
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : sortedDays.isEmpty
+              : dayCount == 0
               ? Center(
                   child: Text(
                     'No data available',
@@ -434,7 +367,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
-                      horizontalInterval: 2,
+                      horizontalInterval: 20, // 0, 20, 40, 60, 80, 100
                       getDrawingHorizontalLine: (value) {
                         return FlLine(color: Colors.grey[800], strokeWidth: 1);
                       },
@@ -443,8 +376,8 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 30,
-                          interval: 2,
+                          reservedSize: 35,
+                          interval: 20, // Show 0, 20, 40, 60, 80, 100
                           getTitlesWidget: (value, meta) {
                             return Text(
                               value.toInt().toString(),
@@ -461,13 +394,19 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 30,
+                          interval: 1, // Only show labels at integer positions
                           getTitlesWidget: (value, meta) {
                             final index = value.toInt();
-                            if (index < 0 || index >= sortedDays.length) {
+                            // Only show label if value is exactly an integer and within bounds
+                            if (value != index.toDouble() ||
+                                index < 0 ||
+                                index >= dayCount) {
                               return const SizedBox.shrink();
                             }
+                            // Show date label
+                            final date = _dailyMetrics[index].date;
                             return Text(
-                              'Day ${index + 1}',
+                              '${date.month}/${date.day}',
                               style: TextStyle(
                                 fontFamily: 'Lettera',
                                 fontSize: 10,
@@ -485,13 +424,31 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                       ),
                     ),
                     borderData: FlBorderData(show: false),
-                    minX: 0,
-                    maxX: sortedDays.length - 1 > 0
-                        ? (sortedDays.length - 1).toDouble()
-                        : 1,
+                    // For single data point, center it by using -0.5 to 0.5 range
+                    minX: dayCount == 1 ? -0.5 : 0,
+                    maxX: dayCount == 1 ? 0.5 : (dayCount - 1).toDouble(),
                     minY: 0,
-                    maxY: 10,
+                    maxY: 100, // Metrics are on 0-100 scale
                     lineBarsData: chartData,
+                    clipData: FlClipData.all(),
+                    // Format tooltip to show clean numbers
+                    lineTouchData: LineTouchData(
+                      enabled: true,
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((spot) {
+                            return LineTooltipItem(
+                              spot.y.toStringAsFixed(1),
+                              TextStyle(
+                                color: spot.bar.color,
+                                fontFamily: 'Lettera',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
                   ),
                 ),
         ),

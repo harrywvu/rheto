@@ -283,14 +283,20 @@ class _ConsequenceEngineScreenState extends State<ConsequenceEngineScreen> {
               Navigator.pop(context);
               _startNewChain();
             },
-            child: const Text('New Chain'),
+            child: const Text(
+              'New Chain',
+              style: TextStyle(color: Colors.white, fontFamily: 'Lettera'),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _showRemixOptions();
             },
-            child: const Text('Remix'),
+            child: const Text(
+              'Remix',
+              style: TextStyle(color: Colors.white, fontFamily: 'Lettera'),
+            ),
           ),
         ],
       ),

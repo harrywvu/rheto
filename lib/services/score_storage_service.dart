@@ -1,11 +1,31 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'metrics_database.dart';
 
 class ScoreStorageService {
   static const String _ctMetricsKey = 'critical_thinking_metrics';
   static const String _memMetricsKey = 'memory_metrics';
   static const String _crMetricsKey = 'creativity_metrics';
   static const String _hasCompletedAssessmentKey = 'has_completed_assessment';
+
+  // Map display names to database column names
+  static const Map<String, String> _displayToDbKey = {
+    // Critical Thinking
+    'Accuracy': 'accuracy_rate',
+    'Bias Detection': 'bias_detection_rate',
+    'Cognitive Reflection': 'cognitive_reflection',
+    'Justification Quality': 'justification_quality',
+    // Memory
+    'Recall Accuracy': 'recall_accuracy',
+    'Recall Latency': 'recall_latency',
+    'Retention Curve': 'retention_curve',
+    'Item Mastery': 'item_mastery',
+    // Creativity
+    'Fluency': 'fluency',
+    'Flexibility': 'flexibility',
+    'Originality': 'originality',
+    'Refinement Gain': 'refinement_gain',
+  };
 
   static Future<void> saveMetrics({
     required Map<String, double> criticalThinkingMetrics,
@@ -17,6 +37,38 @@ class ScoreStorageService {
     await prefs.setString(_memMetricsKey, jsonEncode(memoryMetrics));
     await prefs.setString(_crMetricsKey, jsonEncode(creativityMetrics));
     await prefs.setBool(_hasCompletedAssessmentKey, true);
+
+    // Also persist to SQLite database for historical tracking
+    await _insertSessionToDatabase(
+      criticalThinkingMetrics,
+      memoryMetrics,
+      creativityMetrics,
+    );
+  }
+
+  /// Insert a session into the SQLite database
+  static Future<void> _insertSessionToDatabase(
+    Map<String, double> ctMetrics,
+    Map<String, double> memMetrics,
+    Map<String, double> crMetrics,
+  ) async {
+    // Convert display names to database column names
+    final dbMetrics = <String, double>{};
+
+    void addMetrics(Map<String, double> metrics) {
+      for (final entry in metrics.entries) {
+        final dbKey = _displayToDbKey[entry.key];
+        if (dbKey != null) {
+          dbMetrics[dbKey] = entry.value;
+        }
+      }
+    }
+
+    addMetrics(ctMetrics);
+    addMetrics(memMetrics);
+    addMetrics(crMetrics);
+
+    await MetricsDatabase.insertSession(dbMetrics);
   }
 
   static Future<Map<String, Map<String, double>>> getMetrics() async {
