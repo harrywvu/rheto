@@ -5,6 +5,7 @@ import 'package:rheto/screens/contradiction_hunter_screen.dart';
 import 'package:rheto/screens/sequence_memory_screen.dart';
 import 'package:rheto/screens/consequence_engine_screen.dart';
 import 'package:rheto/screens/concept_cartographer_screen.dart';
+import 'package:rheto/services/currency_service.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   final Module module;
@@ -212,14 +213,22 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _buildActivityModal(context, activity),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) =>
+            _buildActivityModal(context, activity, setModalState),
+      ),
     );
   }
 
-  Widget _buildActivityModal(BuildContext context, Activity activity) {
+  Widget _buildActivityModal(
+    BuildContext context,
+    Activity activity,
+    StateSetter setModalState,
+  ) {
     final color = _getActivityColor(activity.difficulty);
     final minReward = activity.baseReward;
     final maxReward = (activity.baseReward * 1.5).toInt();
+    final cost = activity.type == ActivityType.conceptCartographer ? 15.0 : 0.0;
 
     return Container(
       padding: EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -297,152 +306,321 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
             ),
             SizedBox(height: 20),
 
-            // Rewards Section
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Color(0xFFFFD43B).withOpacity(0.6),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                color: Color(0xFFFFD43B).withOpacity(0.08),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Cost Section (if applicable)
+            if (cost > 0)
+              _buildCostSection(context, cost)
+            else
+              const SizedBox.shrink(),
+
+            if (cost > 0) const SizedBox(height: 20),
+
+            // Rewards Section (only show if baseReward > 0)
+            if (activity.baseReward > 0)
+              Column(
                 children: [
-                  Row(
-                    children: [
-                      FaIcon(
-                        FontAwesomeIcons.coins,
-                        color: Color(0xFFFFD43B),
-                        size: 18,
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'In-App Currency Range',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Ntype82-R',
-                          color: Color(0xFFFFD43B),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
                   Container(
-                    padding: EdgeInsets.all(12),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Color(0xFFFFD43B).withOpacity(0.6),
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      color: Color(0xFFFFD43B).withOpacity(0.08),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
                           children: [
-                            Text(
-                              'Minimum',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    fontFamily: 'Lettera',
-                                    color: Colors.grey[500],
-                                  ),
+                            FaIcon(
+                              FontAwesomeIcons.coins,
+                              color: Color(0xFFFFD43B),
+                              size: 18,
                             ),
-                            SizedBox(height: 4),
+                            SizedBox(width: 12),
                             Text(
-                              '$minReward',
-                              style: Theme.of(context).textTheme.headlineSmall
+                              'In-App Currency Reward',
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    fontFamily: 'NType82-R',
+                                    fontFamily: 'Ntype82-R',
                                     color: Color(0xFFFFD43B),
                                   ),
                             ),
                           ],
                         ),
+                        SizedBox(height: 12),
                         Container(
-                          width: 1,
-                          height: 40,
-                          color: Colors.grey[700],
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Minimum',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          fontFamily: 'Lettera',
+                                          color: Colors.grey[500],
+                                        ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    '$minReward',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          fontFamily: 'NType82-R',
+                                          color: Color(0xFFFFD43B),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: Colors.grey[700],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Maximum',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          fontFamily: 'Lettera',
+                                          color: Colors.grey[500],
+                                        ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    '$maxReward',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          fontFamily: 'NType82-R',
+                                          color: Color(0xFFFFD43B),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Maximum',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    fontFamily: 'Lettera',
-                                    color: Colors.grey[500],
-                                  ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              '$maxReward',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    fontFamily: 'NType82-R',
-                                    color: Color(0xFFFFD43B),
-                                  ),
-                            ),
-                          ],
+                        SizedBox(height: 8),
+                        Text(
+                          'Earn more by performing better!',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontFamily: 'Lettera',
+                                color: Colors.grey[500],
+                                fontSize: 11,
+                              ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(height: 24),
+                ],
+              )
+            else
+              const SizedBox.shrink(),
+
+            // Play Button
+            if (cost > 0)
+              FutureBuilder<double>(
+                future: CurrencyService.getBalance(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error loading balance'));
+                  }
+
+                  final balance = snapshot.data ?? 0.0;
+                  final hasEnough = balance >= cost;
+
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: hasEnough
+                          ? () {
+                              Navigator.pop(context);
+                              _navigateToActivity(activity);
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasEnough ? color : Colors.grey[700],
+                        disabledBackgroundColor: Colors.grey[700],
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FaIcon(
+                            hasEnough
+                                ? FontAwesomeIcons.play
+                                : FontAwesomeIcons.lock,
+                            color: hasEnough ? Colors.black : Colors.grey[500],
+                            size: 16,
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            hasEnough ? 'Play Activity' : 'Insufficient Coins',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontFamily: 'Ntype82-R',
+                                  color: hasEnough
+                                      ? Colors.black
+                                      : Colors.grey[500],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _navigateToActivity(activity);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FaIcon(
+                        FontAwesomeIcons.play,
+                        color: Colors.black,
+                        size: 16,
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Play Activity',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontFamily: 'Ntype82-R',
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCostSection(BuildContext context, double cost) {
+    return FutureBuilder<double>(
+      future: CurrencyService.getBalance(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error loading balance'));
+        }
+
+        final balance = snapshot.data ?? 0.0;
+        final hasEnough = balance >= cost;
+        final themeColor = hasEnough ? Color(0xFF63E6BE) : Colors.red;
+
+        return Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: themeColor.withOpacity(0.6), width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            color: themeColor.withOpacity(0.08),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  FaIcon(FontAwesomeIcons.coins, color: themeColor, size: 18),
+                  SizedBox(width: 12),
                   Text(
-                    'Earn more by performing better!',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontFamily: 'Lettera',
-                      color: Colors.grey[500],
-                      fontSize: 11,
+                    'Cost to Play',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Ntype82-R',
+                      color: themeColor,
                     ),
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 24),
-
-            // Play Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _navigateToActivity(activity);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FaIcon(
-                      FontAwesomeIcons.play,
-                      color: Colors.black,
-                      size: 16,
-                    ),
-                    SizedBox(width: 12),
                     Text(
-                      'Play Activity',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontFamily: 'Ntype82-R',
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
+                      'Required',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'Lettera',
+                        color: Colors.grey[500],
                       ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '${cost.toInt()}',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontFamily: 'NType82-R',
+                            color: themeColor,
+                          ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+              SizedBox(height: 8),
+              Text(
+                hasEnough
+                    ? 'You have enough coins to play!'
+                    : 'Insufficient coins! Complete other activities to earn more.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontFamily: 'Lettera',
+                  color: hasEnough ? Color(0xFF63E6BE) : Colors.red,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -506,20 +684,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     switch (activity.type) {
       case ActivityType.contradictionHunter:
         return 'Read a short story carefully. Identify all the logical contradictions hidden within it. Select the contradictions you found and write a detailed justification explaining why they are contradictions.';
-      case ActivityType.logicalReasoning:
-        return 'You will be presented with logic puzzles. Analyze the clues and find the correct answer. Each puzzle tests different aspects of logical reasoning.';
-      case ActivityType.memoryRecall:
-        return 'Memorize a sequence of items shown on screen. After a delay, recall the items in the correct order. The sequences get progressively harder.';
-      case ActivityType.patternRecognition:
-        return 'Identify visual or numerical patterns in sequences. Complete the pattern by selecting the correct next element from multiple choices.';
       case ActivityType.sequenceMemory:
         return 'Reorder story events in the correct sequence. Drag and drop event cards to arrange them chronologically, then submit to see your recall accuracy.';
-      case ActivityType.ideaGeneration:
-        return 'Generate creative uses or ideas for everyday objects. Think outside the box and come up with as many unique ideas as possible.';
       case ActivityType.consequenceEngine:
         return 'Given an absurd premise, trace 4 levels of cascading consequences across domains: Personal → Social → Economic → Ecological. Each consequence must logically flow from the previous level. Complete 2 full chains to finish. You can also remix from any level to explore alternate paths.';
-      case ActivityType.brainstorming:
-        return 'Collaborate on innovative solutions to real-world problems. Share ideas and build upon others\' suggestions to find the best solutions.';
       case ActivityType.conceptCartographer:
         return 'Build a knowledge map through 4 phases: (1) Share what you know about a topic, (2) Arrange concept pieces and draw connections, (3) Test your model with a scenario, (4) Teach back the concept in your own words. AI provides feedback at each step.';
       default:
@@ -531,20 +699,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     switch (activity.type) {
       case ActivityType.contradictionHunter:
         return 'Strengthen your ability to detect logical inconsistencies and hidden contradictions. This activates your brain\'s error-monitoring system and improves critical reasoning.';
-      case ActivityType.logicalReasoning:
-        return 'Strengthen your deductive reasoning skills and ability to solve complex problems using logical thinking.';
-      case ActivityType.memoryRecall:
-        return 'Improve your short-term and long-term memory capacity through systematic recall practice.';
-      case ActivityType.patternRecognition:
-        return 'Enhance your ability to identify relationships and patterns, crucial for problem-solving and analytical thinking.';
       case ActivityType.sequenceMemory:
         return 'Strengthen sequential memory and temporal reasoning through event ordering. This enhances hippocampal activity and supports memory consolidation.';
-      case ActivityType.ideaGeneration:
-        return 'Boost your creative thinking and divergent thinking abilities to generate innovative solutions.';
       case ActivityType.consequenceEngine:
         return 'Develop causal imagination and cross-domain thinking. This activates your Default Mode Network for mental simulation and strengthens DMN-FPN coupling for creative evaluation. Learn to trace complex consequences and think beyond obvious implications.';
-      case ActivityType.brainstorming:
-        return 'Develop collaborative creativity and learn to build upon ideas to create comprehensive solutions.';
       case ActivityType.conceptCartographer:
         return 'Develop deep conceptual understanding through active knowledge construction. Retrieval practice activates prior knowledge, generative learning builds mental models, and metacognitive monitoring strengthens awareness of understanding gaps. This enhances long-term retention and transfer of knowledge.';
       default:
@@ -597,23 +755,49 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         );
         break;
       case ActivityType.conceptCartographer:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ConceptCartographerScreen(
-              activity: activity,
-              module: widget.module,
-              onComplete: () {
-                Navigator.pop(context);
-              },
-            ),
-          ),
-        );
+        _handleConceptCartographerNavigation(activity);
         break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${activity.name} coming soon!')),
         );
+    }
+  }
+
+  Future<void> _handleConceptCartographerNavigation(Activity activity) async {
+    const requiredCoins = 15.0;
+    final hasEnough = await CurrencyService.hasEnoughCoins(requiredCoins);
+
+    if (!hasEnough) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Insufficient coins! You need $requiredCoins coins to play this activity.',
+            ),
+            backgroundColor: Colors.red[700],
+          ),
+        );
+      }
+      return;
+    }
+
+    // Deduct coins
+    await CurrencyService.deductCoins(requiredCoins);
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ConceptCartographerScreen(
+            activity: activity,
+            module: widget.module,
+            onComplete: () {
+              Navigator.pop(context);
+            },
+          ),
+        ),
+      );
     }
   }
 }

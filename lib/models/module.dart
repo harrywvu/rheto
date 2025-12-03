@@ -47,16 +47,6 @@ class Module {
           estimatedTime: 6,
           baseReward: 60,
         ),
-        Activity(
-          id: 'ct_logical_reasoning',
-          type: ActivityType.logicalReasoning,
-          name: 'Logical Reasoning',
-          description:
-              'Solve logic puzzles and deductive reasoning challenges\n\nMetrics: Logical Structure, Reasoning Accuracy, Problem-Solving Speed',
-          difficulty: 'Medium',
-          estimatedTime: 5,
-          baseReward: 50,
-        ),
       ],
     );
   }
@@ -68,26 +58,6 @@ class Module {
       description: 'Improve recall accuracy and retention',
       icon: 'lightbulb',
       activities: [
-        Activity(
-          id: 'mem_recall',
-          type: ActivityType.memoryRecall,
-          name: 'Memory Recall',
-          description:
-              'Remember and recall a sequence of items\n\nMetrics: Accuracy Rate, Retention, Recall Speed',
-          difficulty: 'Medium',
-          estimatedTime: 4,
-          baseReward: 50,
-        ),
-        Activity(
-          id: 'mem_pattern',
-          type: ActivityType.patternRecognition,
-          name: 'Pattern Recognition',
-          description:
-              'Identify patterns in sequences and visual arrangements\n\nMetrics: Pattern Detection Accuracy, Speed, Complexity Recognition',
-          difficulty: 'Medium',
-          estimatedTime: 6,
-          baseReward: 60,
-        ),
         Activity(
           id: 'mem_sequence',
           type: ActivityType.sequenceMemory,
@@ -110,16 +80,6 @@ class Module {
       icon: 'squareShareNodes',
       activities: [
         Activity(
-          id: 'cr_idea_gen',
-          type: ActivityType.ideaGeneration,
-          name: 'Idea Generation',
-          description:
-              'Generate creative uses for everyday objects\n\nMetrics: Fluency, Flexibility, Originality, Refinement Quality',
-          difficulty: 'Medium',
-          estimatedTime: 5,
-          baseReward: 50,
-        ),
-        Activity(
           id: 'cr_consequence_engine',
           type: ActivityType.consequenceEngine,
           name: 'Consequence Engine',
@@ -128,16 +88,6 @@ class Module {
           difficulty: 'Hard',
           estimatedTime: 8,
           baseReward: 75,
-        ),
-        Activity(
-          id: 'cr_brainstorm',
-          type: ActivityType.brainstorming,
-          name: 'Brainstorming',
-          description:
-              'Collaborate on innovative solutions to real-world problems\n\nMetrics: Idea Quantity, Idea Quality, Innovation Index, Team Collaboration',
-          difficulty: 'Medium',
-          estimatedTime: 7,
-          baseReward: 65,
         ),
       ],
     );
