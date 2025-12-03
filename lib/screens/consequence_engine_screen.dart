@@ -418,7 +418,11 @@ class _ConsequenceEngineScreenState extends State<ConsequenceEngineScreen> {
   Widget build(BuildContext context) {
     if (showingResults) {
       return const SizedBox.expand(
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+          ),
+        ),
       );
     }
 
@@ -428,7 +432,11 @@ class _ConsequenceEngineScreenState extends State<ConsequenceEngineScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
             appBar: AppBar(title: const Text('Consequence Engine')),
-            body: const Center(child: CircularProgressIndicator()),
+            body: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+              ),
+            ),
           );
         }
 

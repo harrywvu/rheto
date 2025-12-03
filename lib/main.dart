@@ -84,7 +84,11 @@ class _MyHomePageState extends State<MyHomePage> {
         } else {
           // Show loading while determining initial screen
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+              ),
+            ),
           );
         }
       },

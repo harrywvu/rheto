@@ -5,7 +5,7 @@ import 'package:rheto/screens/contradiction_hunter_screen.dart';
 import 'package:rheto/screens/sequence_memory_screen.dart';
 import 'package:rheto/screens/consequence_engine_screen.dart';
 import 'package:rheto/screens/concept_cartographer_screen.dart';
-import 'package:rheto/services/currency_service.dart';
+import 'package:rheto/services/progress_service.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   final Module module;
@@ -436,25 +436,50 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
 
             // Play Button
             if (cost > 0)
-              FutureBuilder<double>(
-                future: CurrencyService.getBalance(),
+              FutureBuilder<UserProgress>(
+                future: ProgressService.getProgress(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFFDA77F2),
+                        ),
+                      ),
+                    );
                   }
 
                   if (snapshot.hasError) {
                     return Center(child: Text('Error loading balance'));
                   }
 
-                  final balance = snapshot.data ?? 0.0;
-                  final hasEnough = balance >= cost;
+                  // Use ProgressService for balance check (single source of truth)
+                  if (!snapshot.hasData) {
+                    return Center(child: Text('Loading balance...'));
+                  }
+                  final progress = snapshot.data!;
+                  final hasEnough = progress.totalCoins >= cost;
 
                   return SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: hasEnough
-                          ? () {
+                          ? () async {
+                              // Deduct currency from ProgressService (single source of truth)
+                              final updatedProgress = UserProgress(
+                                totalCoins: progress.totalCoins - cost.round(),
+                                currentStreak: progress.currentStreak,
+                                lastActivityDate: progress.lastActivityDate,
+                                completedActivities:
+                                    progress.completedActivities,
+                                modulesCompletedToday:
+                                    progress.modulesCompletedToday,
+                                baselineMetrics: progress.baselineMetrics,
+                              );
+                              await ProgressService.saveProgress(
+                                updatedProgress,
+                              );
+
                               Navigator.pop(context);
                               _navigateToActivity(activity);
                             }
@@ -499,7 +524,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    // Free activity - just navigate
                     Navigator.pop(context);
                     _navigateToActivity(activity);
                   },
@@ -539,19 +565,27 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Widget _buildCostSection(BuildContext context, double cost) {
-    return FutureBuilder<double>(
-      future: CurrencyService.getBalance(),
+    return FutureBuilder<UserProgress>(
+      future: ProgressService.getProgress(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDA77F2)),
+            ),
+          );
         }
 
         if (snapshot.hasError) {
           return Center(child: Text('Error loading balance'));
         }
 
-        final balance = snapshot.data ?? 0.0;
-        final hasEnough = balance >= cost;
+        // Use ProgressService for balance display (single source of truth)
+        if (!snapshot.hasData) {
+          return Center(child: Text('Loading balance...'));
+        }
+        final progress = snapshot.data!;
+        final hasEnough = progress.totalCoins >= cost;
         final themeColor = hasEnough ? Color(0xFF63E6BE) : Colors.red;
 
         return Container(
@@ -765,10 +799,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Future<void> _handleConceptCartographerNavigation(Activity activity) async {
-    const requiredCoins = 15.0;
-    final hasEnough = await CurrencyService.hasEnoughCoins(requiredCoins);
+    const requiredCoins = 15;
+    final progress = await ProgressService.getProgress();
 
-    if (!hasEnough) {
+    if (progress.totalCoins < requiredCoins) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -782,8 +816,16 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       return;
     }
 
-    // Deduct coins
-    await CurrencyService.deductCoins(requiredCoins);
+    // Deduct coins using ProgressService (single source of truth)
+    final updatedProgress = UserProgress(
+      totalCoins: progress.totalCoins - requiredCoins,
+      currentStreak: progress.currentStreak,
+      lastActivityDate: progress.lastActivityDate,
+      completedActivities: progress.completedActivities,
+      modulesCompletedToday: progress.modulesCompletedToday,
+      baselineMetrics: progress.baselineMetrics,
+    );
+    await ProgressService.saveProgress(updatedProgress);
 
     if (mounted) {
       Navigator.push(

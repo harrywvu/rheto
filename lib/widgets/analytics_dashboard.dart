@@ -351,7 +351,13 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFFDA77F2),
+                    ),
+                  ),
+                )
               : dayCount == 0
               ? Center(
                   child: Text(

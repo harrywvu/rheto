@@ -8,6 +8,7 @@ import 'package:rheto/services/scoring_service.dart';
 import 'package:rheto/widgets/activity_results_dialog.dart';
 import 'package:rheto/widgets/graph_canvas_enhanced.dart';
 import 'package:rheto/widgets/ai_review_panel.dart';
+import 'package:rheto/services/progress_service.dart';
 
 enum ConceptPhase {
   topicSelection,
@@ -451,15 +452,14 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
     _showCompletionDialog(metricsDisplay, totalScore);
   }
 
-  void _showCompletionDialog(Map<String, dynamic> metrics, double score) {
-    // Create a UserProgress object for the dialog
-    final userProgress = UserProgress(
-      totalCoins: 0,
-      currentStreak: 0,
-      lastActivityDate: DateTime.now(),
-      completedActivities: [],
-      modulesCompletedToday: {},
-    );
+  Future<void> _showCompletionDialog(
+    Map<String, dynamic> metrics,
+    double score,
+  ) async {
+    // Fetch actual user progress (coins already deducted on entry)
+    final userProgress = await ProgressService.getProgress();
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
