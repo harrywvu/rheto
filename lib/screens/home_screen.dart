@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late Future<Map<String, dynamic>> _dashboardDataFuture;
   late PageController _pageController;
   int _currentNavIndex = 0;
+  int _refreshKey = 0; // Used to force child widgets to rebuild
 
   @override
   void initState() {
@@ -38,10 +39,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Refresh dashboard data when app resumes (e.g., returning from activity)
-      setState(() {
-        _dashboardDataFuture = _loadDashboardData();
-      });
+      // Refresh dashboard data when app resumes (e.g., returning from background)
+      _refreshDashboard();
     }
   }
 
@@ -83,6 +82,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           setState(() {
             _currentNavIndex = index;
           });
+          // Refresh dashboard when switching back to it
+          if (index == 0) {
+            _refreshDashboard();
+          }
         },
         children: [
           _buildDashboardPage(),
@@ -211,8 +214,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 SizedBox(height: 24),
 
-                // Domain Stats Navbar - Tappable (separate widget for independent refresh)
-                DomainStatsNavbar(),
+                // Domain Stats Navbar - Tappable (uses key to force rebuild on refresh)
+                DomainStatsNavbar(key: ValueKey(_refreshKey)),
 
                 SizedBox(height: 32),
 
@@ -430,7 +433,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => ActivitiesScreen(module: module)),
-    );
+    ).then((_) {
+      // Refresh dashboard data when returning from activities
+      _refreshDashboard();
+    });
+  }
+
+  /// Public method to refresh dashboard data - can be called from anywhere
+  void _refreshDashboard() {
+    setState(() {
+      _refreshKey++; // Increment to force DomainStatsNavbar rebuild
+      _dashboardDataFuture = _loadDashboardData();
+    });
   }
 
   Widget _buildProgressIndicator(
@@ -519,11 +533,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             // Home Tab
             GestureDetector(
               onTap: () {
-                _pageController.animateToPage(
-                  0,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
+                if (_currentNavIndex == 0) {
+                  // Already on home, just refresh
+                  _refreshDashboard();
+                } else {
+                  _pageController.animateToPage(
+                    0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                }
               },
               child: Padding(
                 padding: EdgeInsets.all(12),
