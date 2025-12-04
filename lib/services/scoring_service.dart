@@ -1,8 +1,13 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ScoringService {
-  static String baseUrl = 'http://localhost:3000';
+  static late String baseUrl;
+
+  static Future<void> initialize() async {
+    baseUrl = dotenv.env['BACKEND_URL'] ?? 'https://rheto.onrender.com';
+  }
 
   static void setBaseUrl(String url) => baseUrl = url;
 

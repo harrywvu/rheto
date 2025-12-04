@@ -75,6 +75,11 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
   late TextEditingController topicInputController;
   bool isLoadingTopic = false;
 
+  // Loading states for AI submissions
+  bool isSubmittingSelfAssessment = false;
+  bool isSubmittingPrediction = false;
+  bool isSubmittingTeachBack = false;
+
   // Self-Assessment Phase
   late TextEditingController priorKnowledgeController;
   Map<String, dynamic>? assessmentFeedback;
@@ -287,6 +292,8 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
       return;
     }
 
+    setState(() => isSubmittingSelfAssessment = true);
+
     try {
       final response = await http
           .post(
@@ -304,13 +311,16 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
         setState(() {
           assessmentFeedback = feedback;
           currentPhase = ConceptPhase.conceptAssembly;
+          isSubmittingSelfAssessment = false;
         });
       } else {
+        setState(() => isSubmittingSelfAssessment = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error assessing knowledge')),
         );
       }
     } catch (e) {
+      setState(() => isSubmittingSelfAssessment = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -346,6 +356,8 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
       return;
     }
 
+    setState(() => isSubmittingPrediction = true);
+
     try {
       final response = await http
           .post(
@@ -380,9 +392,20 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
         setState(() {
           scenarioFeedback = feedback;
           currentPhase = ConceptPhase.teachBack;
+          isSubmittingPrediction = false;
         });
+      } else {
+        setState(() => isSubmittingPrediction = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error evaluating prediction')),
+        );
       }
-    } catch (e) {}
+    } catch (e) {
+      setState(() => isSubmittingPrediction = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
   Future<void> _submitTeachBack() async {
@@ -392,6 +415,8 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
       );
       return;
     }
+
+    setState(() => isSubmittingTeachBack = true);
 
     try {
       final response = await http
@@ -409,11 +434,16 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
           )
           .timeout(const Duration(seconds: 30));
 
+      setState(() => isSubmittingTeachBack = false);
+
       if (response.statusCode == 200) {
         final scores = jsonDecode(response.body);
         _calculateFinalScores(scores);
+      } else {
+        _calculateFinalScores({});
       }
     } catch (e) {
+      setState(() => isSubmittingTeachBack = false);
       _calculateFinalScores({});
     }
   }
@@ -859,19 +889,47 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _submitSelfAssessment,
+            onPressed: isSubmittingSelfAssessment
+                ? null
+                : _submitSelfAssessment,
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF74C0FC),
               padding: EdgeInsets.symmetric(vertical: 16),
+              disabledBackgroundColor: Colors.grey[700],
             ),
-            child: Text(
-              'Continue to Concept Assembly',
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: 'Ntype82-R',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: isSubmittingSelfAssessment
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Analyzing...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Ntype82-R',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    'Continue to Concept Assembly',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Ntype82-R',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -951,34 +1009,28 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
             SizedBox(width: 12),
             ElevatedButton.icon(
               onPressed: () {
-                setState(() {
-                  // Delete selected node
-                  final selectedNode = graphModel.nodes.firstWhere(
-                    (n) => n.isSelected,
-                    orElse: () => GraphNode(id: '', x: 0, y: 0, text: ''),
-                  );
-                  if (selectedNode.id.isNotEmpty) {
-                    graphModel.removeNode(selectedNode.id);
-                    return;
-                  }
-
-                  // Delete selected edge
-                  final selectedEdge = graphModel.edges.firstWhere(
-                    (e) => e.isSelected,
-                    orElse: () => GraphEdge(
-                      id: '',
-                      sourceId: '',
-                      targetId: '',
-                      label: '',
+                // Only delete connections, not nodes
+                final selectedEdge = graphModel.edges.firstWhere(
+                  (e) => e.isSelected,
+                  orElse: () =>
+                      GraphEdge(id: '', sourceId: '', targetId: '', label: ''),
+                );
+                if (selectedEdge.id.isNotEmpty) {
+                  setState(() {
+                    graphModel.removeEdge(selectedEdge.id);
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Tap a connection line to select it for deletion',
+                      ),
                     ),
                   );
-                  if (selectedEdge.id.isNotEmpty) {
-                    graphModel.removeEdge(selectedEdge.id);
-                  }
-                });
+                }
               },
               icon: const Icon(Icons.delete),
-              label: const Text('Delete'),
+              label: const Text('Delete Connection'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red[700]),
             ),
           ],
@@ -1312,19 +1364,45 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _submitPrediction,
+            onPressed: isSubmittingPrediction ? null : _submitPrediction,
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF74C0FC),
               padding: EdgeInsets.symmetric(vertical: 16),
+              disabledBackgroundColor: Colors.grey[700],
             ),
-            child: Text(
-              'Continue to Teach-Back',
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: 'Ntype82-R',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: isSubmittingPrediction
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Evaluating...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Ntype82-R',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    'Continue to Teach-Back',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Ntype82-R',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -1367,19 +1445,45 @@ class _ConceptCartographerScreenState extends State<ConceptCartographerScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _submitTeachBack,
+            onPressed: isSubmittingTeachBack ? null : _submitTeachBack,
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF74C0FC),
               padding: EdgeInsets.symmetric(vertical: 16),
+              disabledBackgroundColor: Colors.grey[700],
             ),
-            child: Text(
-              'Complete Activity',
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: 'Ntype82-R',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: isSubmittingTeachBack
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Scoring...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Ntype82-R',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    'Complete Activity',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Ntype82-R',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ),
       ],

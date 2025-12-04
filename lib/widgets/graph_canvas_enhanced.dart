@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io' show Platform;
+import 'dart:math' show sqrt;
 import '../models/graph_models.dart';
 import 'graph_painter.dart';
 import 'node_info_modal.dart';
@@ -232,10 +233,25 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
         });
         widget.onGraphChanged();
       } else {
-        setState(() {
-          _graph.clearSelections();
-        });
-        widget.onGraphChanged();
+        // Check if user tapped on an edge
+        final tappedEdge = _findEdgeAtPosition(tapPos);
+        if (tappedEdge != null) {
+          setState(() {
+            _graph.clearSelections();
+            final index = _graph.edges.indexWhere((e) => e.id == tappedEdge.id);
+            if (index != -1) {
+              _graph.edges[index] = _graph.edges[index].copyWith(
+                isSelected: true,
+              );
+            }
+          });
+          widget.onGraphChanged();
+        } else {
+          setState(() {
+            _graph.clearSelections();
+          });
+          widget.onGraphChanged();
+        }
       }
     }
   }
@@ -359,6 +375,66 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
     return null;
   }
 
+  GraphEdge? _findEdgeAtPosition(Offset position) {
+    const threshold = 15.0; // Distance threshold for edge selection
+
+    for (final edge in _graph.edges) {
+      final sourceNode = _graph.getNode(edge.sourceId);
+      final targetNode = _graph.getNode(edge.targetId);
+
+      if (sourceNode == null || targetNode == null) continue;
+
+      // Calculate distance from point to line segment
+      final distance = _distanceToLineSegment(
+        position.dx,
+        position.dy,
+        sourceNode.x,
+        sourceNode.y,
+        targetNode.x,
+        targetNode.y,
+      );
+
+      if (distance <= threshold) {
+        return edge;
+      }
+    }
+    return null;
+  }
+
+  double _distanceToLineSegment(
+    double px,
+    double py,
+    double x1,
+    double y1,
+    double x2,
+    double y2,
+  ) {
+    final dx = x2 - x1;
+    final dy = y2 - y1;
+    final lengthSquared = dx * dx + dy * dy;
+
+    if (lengthSquared == 0) {
+      // Line segment is a point
+      return _distance(px, py, x1, y1);
+    }
+
+    // Calculate projection parameter
+    var t = ((px - x1) * dx + (py - y1) * dy) / lengthSquared;
+    t = t.clamp(0.0, 1.0);
+
+    // Find closest point on line segment
+    final closestX = x1 + t * dx;
+    final closestY = y1 + t * dy;
+
+    return _distance(px, py, closestX, closestY);
+  }
+
+  double _distance(double x1, double y1, double x2, double y2) {
+    final dx = x2 - x1;
+    final dy = y2 - y1;
+    return sqrt(dx * dx + dy * dy);
+  }
+
   void _showEdgeLabelDialog(GraphNode targetNode) {
     final labelController = TextEditingController();
 
@@ -428,26 +504,17 @@ class _GraphCanvasEnhancedState extends State<GraphCanvasEnhanced>
   }
 
   void deleteSelected() {
-    setState(() {
-      final selectedNode = _graph.nodes.firstWhere(
-        (n) => n.isSelected,
-        orElse: () => GraphNode(id: '', x: 0, y: 0, text: ''),
-      );
+    // Only delete edges, not nodes
+    final selectedEdge = _graph.edges.firstWhere(
+      (e) => e.isSelected,
+      orElse: () => GraphEdge(id: '', sourceId: '', targetId: '', label: ''),
+    );
 
-      if (selectedNode.id.isNotEmpty) {
-        _graph.removeNode(selectedNode.id);
-        return;
-      }
-
-      final selectedEdge = _graph.edges.firstWhere(
-        (e) => e.isSelected,
-        orElse: () => GraphEdge(id: '', sourceId: '', targetId: '', label: ''),
-      );
-
-      if (selectedEdge.id.isNotEmpty) {
+    if (selectedEdge.id.isNotEmpty) {
+      setState(() {
         _graph.removeEdge(selectedEdge.id);
-      }
-    });
-    widget.onGraphChanged();
+      });
+      widget.onGraphChanged();
+    }
   }
 }

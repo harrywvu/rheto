@@ -12,10 +12,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load();
-
-  final backendUrl = dotenv.env['BACKEND_URL'] ?? 'http://localhost:3000';
-
-  ScoringService.setBaseUrl(backendUrl);
+  await ScoringService.initialize();
   await NotificationService().initialize();
 
   runApp(const MyApp());

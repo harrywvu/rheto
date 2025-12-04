@@ -234,6 +234,7 @@ class GraphPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(GraphPainter oldDelegate) {
-    return oldDelegate.graph != graph;
+    // Always repaint since graph model is mutated in place
+    return true;
   }
 }
